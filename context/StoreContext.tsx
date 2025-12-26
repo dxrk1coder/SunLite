@@ -21,6 +21,7 @@ interface StoreContextType {
   dbConnected: boolean;
   
   login: (email: string, pass: string) => Promise<{success: boolean, message?: string}>;
+  googleLogin: () => Promise<void>;
   logout: () => Promise<void>;
   register: (email: string, nickname: string, pass: string) => Promise<{success: boolean, message?: string}>;
   
@@ -96,13 +97,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const fetchData = useCallback(async (session?: any) => {
-    if (!isSupabaseConfigured) {
-      setProducts(MOCK_PRODUCTS);
-      setLoading(false);
-      return;
-    }
-
     try {
+      if (!isSupabaseConfigured) {
+        setProducts(MOCK_PRODUCTS);
+        return;
+      }
+
       const currentSession = session || (await supabase.auth.getSession()).data.session;
       
       const { data: prodData } = await supabase.from('products').select('*').order('created_at', { ascending: false });
@@ -111,11 +111,26 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           ...p,
           tariffs: typeof p.tariffs === 'string' ? JSON.parse(p.tariffs) : p.tariffs
         })));
+      } else {
+        setProducts(MOCK_PRODUCTS);
       }
 
       if (currentSession?.user) {
         let { data: userData, error: fetchError } = await supabase.from('users').select('*').eq('id', currentSession.user.id).maybeSingle();
         
+        if (!userData && !fetchError) {
+          const rawName = currentSession.user.user_metadata?.full_name || currentSession.user.user_metadata?.name || currentSession.user.email?.split('@')[0];
+          const newUser = {
+            id: currentSession.user.id,
+            email: currentSession.user.email!,
+            nickname: (rawName || 'Gamer').replace(/\s+/g, '_'),
+            balance: 0,
+            role: UserRole.USER
+          };
+          const { data: createdUser, error: insertError } = await supabase.from('users').insert([newUser]).select().single();
+          if (!insertError) userData = createdUser;
+        }
+
         if (userData) {
           const mappedUser = { ...userData, createdAt: userData.created_at || userData.createdAt };
           setUser(mappedUser);
@@ -128,7 +143,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
       setDbConnected(true);
     } catch (err) {
-      console.warn("Fetch Error:", err);
+      console.warn("Fetch Data Error:", err);
+      setProducts(MOCK_PRODUCTS);
     } finally {
       setLoading(false);
     }
@@ -149,6 +165,43 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
     return () => subscription.unsubscribe();
   }, [fetchData]);
+
+  // Realtime foydalanuvchi ma'lumotlarini kuzatish
+  useEffect(() => {
+    if (!user?.id || !isSupabaseConfigured) return;
+
+    const channel = supabase
+      .channel(`user-updates-${user.id}`)
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'users',
+        filter: `id=eq.${user.id}` 
+      }, (payload) => {
+        // Agar foydalanuvchining roli yoki balansi bazada o'zgarsa, UI-da darhol aks etadi
+        setUser(prev => prev ? { ...prev, ...payload.new } : null);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+
+  const googleLogin = async () => {
+    if (!isSupabaseConfigured) return;
+    try {
+      await supabase.auth.signInWithOAuth({ 
+        provider: 'google', 
+        options: { 
+          redirectTo: window.location.origin + '/login',
+          queryParams: { access_type: 'offline', prompt: 'select_account' }
+        } 
+      });
+    } catch (err) {
+      console.error("Google Auth Error:", err);
+    }
+  };
 
   const login = async (email: string, pass: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
@@ -178,6 +231,37 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       console.error("SignOut Error:", err);
     }
   };
+
+  const adminAddUser = async (userData: any, pass: string) => { 
+    const { data } = await supabase.auth.signUp({ email: userData.email, password: pass }); 
+    if (data.user) {
+      const { password, confirmPassword, ...cleanData } = userData;
+      await supabase.from('users').insert([{ id: data.user.id, ...cleanData }]); 
+    }
+    await fetchData(); 
+  };
+
+  const adminUpdateUser = async (id: string, updates: any) => { 
+    // Faqat ruxsat berilgan maydonlarni yangilaymiz, id va created_at ni tashlab ketamiz
+    const { id: _, created_at: __, createdAt: ___, email: ____, ...cleanUpdates } = updates;
+    await supabase.from('users').update(cleanUpdates).eq('id', id); 
+    await fetchData(); 
+  };
+
+  const updateUserProfile = async (id: string, updates: Partial<User>) => { 
+    const { id: _, created_at: __, role: ___, ...cleanUpdates } = updates as any;
+    const { error } = await supabase.from('users').update(cleanUpdates).eq('id', id); 
+    await fetchData(); 
+    return !error; 
+  };
+
+  const deletePayment = async (id: string, adminPass: string) => { if (adminPass !== 'qazzaq') return false; await supabase.from('payments').delete().eq('id', id); await fetchData(); return true; };
+  const deleteOrder = async (id: string, adminPass: string) => { if (adminPass !== 'qazzaq') return false; await supabase.from('orders').delete().eq('id', id); await fetchData(); return true; };
+  const deleteUser = async (id: string, adminPass: string) => { if (adminPass !== 'qazzaq') return false; await supabase.from('users').delete().eq('id', id); await fetchData(); return true; };
+  const addProduct = async (p: Omit<Product, 'id'>) => { await supabase.from('products').insert([p]); await fetchData(); };
+  const updateProduct = async (id: string, p: Partial<Product>) => { await supabase.from('products').update(p).eq('id', id); await fetchData(); };
+  const deleteProduct = async (id: string, adminPass: string) => { if (adminPass !== 'qazzaq') return false; await supabase.from('products').delete().eq('id', id); await fetchData(); return true; };
+  const seedProducts = async () => { if (!dbConnected) return; await supabase.from('products').delete().neq('id', '0'); await supabase.from('products').insert(MOCK_PRODUCTS.map(({id, ...p}) => p)); await fetchData(); };
 
   const submitPayment = async (amount: number, receiptFile: File) => {
     if (!user || !dbConnected) return;
@@ -247,21 +331,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const deleteNotification = (id: string) => setNotifications(prev => prev.filter(n => n.id !== id));
   const updateConfig = (newConfig: SystemConfig) => setConfig(newConfig);
 
-  const adminAddUser = async (userData: any, pass: string) => { const { data } = await supabase.auth.signUp({ email: userData.email, password: pass }); if (data.user) await supabase.from('users').insert([{ id: data.user.id, ...userData }]); await fetchData(); };
-  const adminUpdateUser = async (id: string, updates: Partial<User>) => { await supabase.from('users').update(updates).eq('id', id); await fetchData(); };
-  const updateUserProfile = async (id: string, updates: Partial<User>) => { const { error } = await supabase.from('users').update(updates).eq('id', id); await fetchData(); return !error; };
-  const deletePayment = async (id: string, adminPass: string) => { if (adminPass !== 'qazzaq') return false; await supabase.from('payments').delete().eq('id', id); await fetchData(); return true; };
-  const deleteOrder = async (id: string, adminPass: string) => { if (adminPass !== 'qazzaq') return false; await supabase.from('orders').delete().eq('id', id); await fetchData(); return true; };
-  const deleteUser = async (id: string, adminPass: string) => { if (adminPass !== 'qazzaq') return false; await supabase.from('users').delete().eq('id', id); await fetchData(); return true; };
-  const addProduct = async (p: Omit<Product, 'id'>) => { await supabase.from('products').insert([p]); await fetchData(); };
-  const updateProduct = async (id: string, p: Partial<Product>) => { await supabase.from('products').update(p).eq('id', id); await fetchData(); };
-  const deleteProduct = async (id: string, adminPass: string) => { if (adminPass !== 'qazzaq') return false; await supabase.from('products').delete().eq('id', id); await fetchData(); return true; };
-  const seedProducts = async () => { if (!dbConnected) return; await supabase.from('products').delete().neq('id', '0'); await supabase.from('products').insert(MOCK_PRODUCTS.map(({id, ...p}) => p)); await fetchData(); };
-
   return (
     <StoreContext.Provider value={{
       user, users, products, payments, orders, config, logs, broadcasts, notifications, loading, dbConnected,
-      login, logout, register,
+      login, googleLogin, logout, register,
       updateConfig, addProduct, updateProduct, deleteProduct, seedProducts,
       adminAddUser, adminUpdateUser, updateUserProfile, deleteUser,
       deletePayment, deleteOrder,

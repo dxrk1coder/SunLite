@@ -28,8 +28,7 @@ export const AdminUsers: React.FC = () => {
       return;
     }
 
-    const { confirmPassword, password, ...userData } = newUser;
-    await adminAddUser(userData, password);
+    await adminAddUser(newUser, newUser.password);
     addBroadcast(`${newUser.nickname} muvaffaqiyatli qo'shildi!`, 'success');
     setIsAdding(false);
     setNewUser({ email: '', nickname: '', role: UserRole.USER, balance: 0, password: '', confirmPassword: '' });
@@ -38,8 +37,16 @@ export const AdminUsers: React.FC = () => {
   const handleUpdateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingUser) return;
-    await adminUpdateUser(editingUser.id, editingUser);
-    addBroadcast('Foydalanuvchi ma\'lumotlari yangilandi', 'success');
+    
+    // Faqat o'zgarishi kerak bo'lgan maydonlarni yuboramiz
+    const updates = {
+      nickname: editingUser.nickname,
+      role: editingUser.role,
+      balance: editingUser.balance
+    };
+    
+    await adminUpdateUser(editingUser.id, updates);
+    addBroadcast(`${editingUser.nickname} ma'lumotlari yangilandi!`, 'success');
     setEditingUser(null);
   };
 
@@ -143,9 +150,7 @@ export const AdminUsers: React.FC = () => {
         </div>
       </div>
 
-      {/* Modals - Outside animation container */}
-
-      {/* Add User Modal */}
+      {/* Modals */}
       {isAdding && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-xl animate-fade-in" onClick={() => setIsAdding(false)} />
@@ -199,35 +204,25 @@ export const AdminUsers: React.FC = () => {
 
                 <div className="pt-4 border-t border-slate-800 space-y-4">
                   <div className="relative">
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 px-1">Yangi Parol</label>
-                    <div className="relative">
-                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
-                       <input 
-                        type={showAdminPass ? "text" : "password"} required value={newUser.password} onChange={e => setNewUser({...newUser, password: e.target.value})}
-                        className="w-full bg-slate-950 border border-slate-800 pl-12 pr-4 py-4 rounded-xl focus:border-emerald-500 outline-none font-bold tracking-widest"
-                        placeholder="••••••••"
-                      />
-                    </div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 px-1">Parol</label>
+                    <input 
+                      type="password" required value={newUser.password} onChange={e => setNewUser({...newUser, password: e.target.value})}
+                      className="w-full bg-slate-950 border border-slate-800 p-4 rounded-xl focus:border-emerald-500 outline-none"
+                      placeholder="••••••••"
+                    />
                   </div>
                   <div className="relative">
                     <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 px-1">Tasdiqlash</label>
-                    <div className="relative">
-                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
-                       <input 
-                        type={showAdminPass ? "text" : "password"} required value={newUser.confirmPassword} onChange={e => setNewUser({...newUser, confirmPassword: e.target.value})}
-                        className="w-full bg-slate-950 border border-slate-800 pl-12 pr-4 py-4 rounded-xl focus:border-emerald-500 outline-none font-bold tracking-widest"
-                        placeholder="••••••••"
-                      />
-                    </div>
+                    <input 
+                      type="password" required value={newUser.confirmPassword} onChange={e => setNewUser({...newUser, confirmPassword: e.target.value})}
+                      className="w-full bg-slate-950 border border-slate-800 p-4 rounded-xl focus:border-emerald-500 outline-none"
+                      placeholder="••••••••"
+                    />
                   </div>
-                  <button type="button" onClick={() => setShowAdminPass(!showAdminPass)} className="text-[10px] text-slate-500 uppercase font-bold hover:text-emerald-500 transition-colors flex items-center space-x-2">
-                     {showAdminPass ? <EyeOff size={12}/> : <Eye size={12}/>}
-                     <span>Parollarni ko'rish</span>
-                  </button>
                 </div>
 
                 <div className="flex gap-4 pt-6">
-                   <button type="button" onClick={() => setIsAdding(false)} className="flex-1 py-4 bg-slate-800 rounded-2xl font-bold uppercase tracking-widest text-xs hover:bg-slate-700 transition-colors">Bekor qilish</button>
+                   <button type="button" onClick={() => setIsAdding(false)} className="flex-1 py-4 bg-slate-800 rounded-2xl font-bold uppercase tracking-widest text-xs">Bekor</button>
                    <button type="submit" className="flex-1 py-4 bg-emerald-600 rounded-2xl font-bold emerald-glow uppercase tracking-widest text-xs text-white">Yaratish</button>
                 </div>
              </form>
@@ -235,18 +230,12 @@ export const AdminUsers: React.FC = () => {
         </div>
       )}
 
-      {/* Edit User Modal */}
       {editingUser && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-xl animate-fade-in" onClick={() => setEditingUser(null)} />
           <div className="relative bg-slate-900 border border-slate-800 w-full max-w-lg p-10 rounded-[2.5rem] shadow-2xl animate-scale-in z-50">
              <div className="flex justify-between items-center mb-8">
-                <div className="flex items-center space-x-4">
-                   <div className="p-4 bg-emerald-500/10 rounded-2xl text-emerald-400">
-                      <UserIcon size={32} />
-                   </div>
-                   <h2 className="text-2xl font-minecraft text-emerald-400 uppercase tracking-widest">USERNI TAHRIRLASH</h2>
-                </div>
+                <h2 className="text-2xl font-minecraft text-emerald-400 uppercase tracking-widest">USERNI TAHRIRLASH</h2>
                 <button onClick={() => setEditingUser(null)} className="p-2 bg-slate-800 rounded-xl hover:bg-slate-700">
                    <X size={20} className="text-slate-400" />
                 </button>
@@ -258,13 +247,6 @@ export const AdminUsers: React.FC = () => {
                    <input 
                     type="text" required value={editingUser.nickname} onChange={e => setEditingUser({...editingUser, nickname: e.target.value})}
                     className="w-full bg-slate-950 border border-slate-800 p-4 rounded-xl focus:border-emerald-500 outline-none font-bold text-emerald-400"
-                   />
-                </div>
-                <div>
-                   <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 px-1">Email</label>
-                   <input 
-                    type="email" readOnly value={editingUser.email}
-                    className="w-full bg-slate-950 border border-slate-800 p-4 rounded-xl opacity-50 cursor-not-allowed outline-none"
                    />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -279,7 +261,7 @@ export const AdminUsers: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 px-1">Balans (UZS)</label>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 px-1">Balans</label>
                     <input 
                       type="number" value={editingUser.balance} onChange={e => setEditingUser({...editingUser, balance: Number(e.target.value)})}
                       className="w-full bg-slate-950 border border-slate-800 p-4 rounded-xl focus:border-emerald-500 outline-none font-bold text-emerald-400"
@@ -288,47 +270,30 @@ export const AdminUsers: React.FC = () => {
                 </div>
 
                 <div className="flex gap-4 pt-6">
-                   <button type="button" onClick={() => setEditingUser(null)} className="flex-1 py-4 bg-slate-800 rounded-2xl font-bold uppercase tracking-widest text-xs">Bekor qilish</button>
-                   <button type="submit" className="flex-1 py-4 bg-emerald-600 rounded-2xl font-bold emerald-glow uppercase tracking-widest text-xs text-white flex items-center justify-center space-x-2">
-                      <Save size={16} />
-                      <span>Saqlash</span>
-                   </button>
+                   <button type="button" onClick={() => setEditingUser(null)} className="flex-1 py-4 bg-slate-800 rounded-2xl font-bold uppercase tracking-widest text-xs">Bekor</button>
+                   <button type="submit" className="flex-1 py-4 bg-emerald-600 rounded-2xl font-bold emerald-glow uppercase tracking-widest text-xs text-white">Saqlash</button>
                 </div>
              </form>
           </div>
         </div>
       )}
 
-      {/* Confirmation Modal */}
       {showPassModal && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-xl animate-fade-in" onClick={() => setShowPassModal(null)} />
           <div className="relative bg-slate-900 border border-slate-800 p-10 rounded-[2.5rem] max-w-sm w-full text-center shadow-2xl animate-scale-in z-50">
             <Trash2 className="mx-auto text-rose-500 mb-6 bg-rose-500/10 p-4 rounded-full" size={56} />
-            <h3 className="text-xl font-minecraft font-bold mb-2 uppercase tracking-widest">FOYDALANUVCHINI O'CHIRISH</h3>
-            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-8 leading-relaxed px-4">
-              Ushbu foydalanuvchi butunlay o'chiriladi. Amalni tasdiqlash uchun admin parolini kiriting.
-            </p>
-            
-            <div className="relative mb-6">
-               <input 
-                type={showAdminPass ? "text" : "password"} value={adminPass} onChange={e => setAdminPass(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 p-5 rounded-2xl focus:border-rose-500 outline-none text-center font-bold text-lg"
-                placeholder="••••••••"
-                autoFocus
-              />
-              <button 
-                type="button" 
-                onClick={() => setShowAdminPass(!showAdminPass)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-rose-500 transition-colors"
-              >
-                {showAdminPass ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-
+            <h3 className="text-xl font-minecraft font-bold mb-2 uppercase tracking-widest">O'CHIRISH</h3>
+            <p className="text-slate-500 text-[10px] font-bold uppercase mb-8">Admin parolini kiriting.</p>
+            <input 
+              type="password" value={adminPass} onChange={e => setAdminPass(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-800 p-5 rounded-2xl focus:border-rose-500 outline-none text-center font-bold mb-6"
+              placeholder="••••••••"
+              autoFocus
+            />
             <div className="flex space-x-3">
               <button onClick={() => setShowPassModal(null)} className="flex-1 py-4 bg-slate-800 rounded-2xl font-bold uppercase text-[10px] tracking-widest">Bekor</button>
-              <button onClick={confirmDelete} className="flex-1 py-4 bg-rose-600 rounded-2xl font-bold uppercase text-[10px] tracking-widest text-white shadow-xl">O'chirish</button>
+              <button onClick={confirmDelete} className="flex-1 py-4 bg-rose-600 rounded-2xl font-bold uppercase text-[10px] tracking-widest text-white">O'chirish</button>
             </div>
           </div>
         </div>
