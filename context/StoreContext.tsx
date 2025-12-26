@@ -21,7 +21,6 @@ interface StoreContextType {
   dbConnected: boolean;
   
   login: (email: string, pass: string) => Promise<{success: boolean, message?: string}>;
-  googleLogin: () => Promise<void>;
   logout: () => Promise<void>;
   register: (email: string, nickname: string, pass: string) => Promise<{success: boolean, message?: string}>;
   
@@ -117,20 +116,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (currentSession?.user) {
         let { data: userData, error: fetchError } = await supabase.from('users').select('*').eq('id', currentSession.user.id).maybeSingle();
         
-        if (!userData && !fetchError) {
-          // Google login or first time session creation
-          const rawName = currentSession.user.user_metadata?.full_name || currentSession.user.user_metadata?.name || currentSession.user.email?.split('@')[0];
-          const newUser = {
-            id: currentSession.user.id,
-            email: currentSession.user.email!,
-            nickname: rawName || 'Gamer',
-            balance: 0,
-            role: UserRole.USER
-          };
-          const { data: createdUser, error: insertError } = await supabase.from('users').insert([newUser]).select().single();
-          if (!insertError) userData = createdUser;
-        }
-
         if (userData) {
           const mappedUser = { ...userData, createdAt: userData.created_at || userData.createdAt };
           setUser(mappedUser);
@@ -152,10 +137,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     fetchData();
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth Event Context:", event);
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+      if (session) {
         fetchData(session);
-      } else if (event === 'SIGNED_OUT') {
+      } else {
         setUser(null);
         setUsers([]);
         setPayments([]);
@@ -165,27 +149,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
     return () => subscription.unsubscribe();
   }, [fetchData]);
-
-  const googleLogin = async () => {
-    if (!dbConnected) return;
-    try {
-      // Supabase OAuth callback URL-ga yo'naltirish
-      const { error } = await supabase.auth.signInWithOAuth({ 
-        provider: 'google', 
-        options: { 
-          redirectTo: window.location.origin,
-          queryParams: { 
-            access_type: 'offline', 
-            prompt: 'select_account' 
-          }
-        } 
-      });
-      if (error) throw error;
-    } catch (err: any) {
-      console.error("Google Auth Logic Error:", err);
-      throw err;
-    }
-  };
 
   const login = async (email: string, pass: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
@@ -200,7 +163,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (authError) return { success: false, message: authError.message };
     if (!data.user) return { success: false, message: 'Foydalanuvchi yaratilmadi.' };
     
-    // Auth trigger ishlamasa, qo'lda yozamiz
     await supabase.from('users').upsert([{ id: data.user.id, email, nickname, balance: 0, role: UserRole.USER }]);
     return { success: true };
   };
@@ -299,7 +261,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <StoreContext.Provider value={{
       user, users, products, payments, orders, config, logs, broadcasts, notifications, loading, dbConnected,
-      login, googleLogin, logout, register,
+      login, logout, register,
       updateConfig, addProduct, updateProduct, deleteProduct, seedProducts,
       adminAddUser, adminUpdateUser, updateUserProfile, deleteUser,
       deletePayment, deleteOrder,
