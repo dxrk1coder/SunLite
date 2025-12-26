@@ -1,0 +1,7 @@
+{
+  "name": "SUNLITE.GG - Professional Minecraft Store",
+  "description": "A high-performance Minecraft donation platform with emerald gamer aesthetics, real-time server stats, and robust admin management.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
