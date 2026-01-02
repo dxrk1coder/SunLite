@@ -27,11 +27,13 @@ export const AdminProducts: React.FC = () => {
       addBroadcast('Maksimal 5 ta tarif qo\'shish mumkin', 'warning');
       return;
     }
+    
+    // Default values reflect the new 30-day requirement
     const newTariff: Tariff = {
       id: Math.random().toString(36).substr(2, 5),
-      name: 'Yangi tarif',
+      name: tariffs.length === 0 ? '30 kunlik' : '60 kunlik',
       price: 0,
-      duration: '30 kun'
+      duration: tariffs.length === 0 ? '30 kun' : '60 kun'
     };
     setCurrentProduct({ ...currentProduct, tariffs: [...tariffs, newTariff] });
   };
@@ -88,7 +90,7 @@ export const AdminProducts: React.FC = () => {
     <>
       <div className="space-y-8 animate-fade-in">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <h2 className="text-2xl font-minecraft text-emerald-400">MAHSULOTLARNI BOSHQARISH</h2>
+          <h2 className="text-2xl font-minecraft text-emerald-400 uppercase tracking-widest">MAHSULOTLAR</h2>
           <div className="flex items-center space-x-3">
             {dbConnected && (
                <button 
@@ -97,7 +99,7 @@ export const AdminProducts: React.FC = () => {
                 className="bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white px-6 py-2 rounded-xl font-bold flex items-center space-x-2 transition-all border border-blue-500/20"
               >
                 {isSeeding ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <DatabaseZap size={18} />}
-                <span>Bazani to'ldirish</span>
+                <span>Bazani yangilash (Mock)</span>
               </button>
             )}
             <button 
@@ -108,7 +110,7 @@ export const AdminProducts: React.FC = () => {
               className="bg-emerald-600 hover:bg-emerald-500 px-6 py-2 rounded-xl font-bold flex items-center space-x-2 transition-all emerald-glow"
             >
               <Plus size={18} />
-              <span>Yangi qo'shish</span>
+              <span>Yangi mahsulot</span>
             </button>
           </div>
         </div>
@@ -142,13 +144,12 @@ export const AdminProducts: React.FC = () => {
         </div>
       </div>
 
-      {/* Edit/Add Modal - Outside animation container */}
       {isEditing && currentProduct && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-2 md:p-6 overflow-hidden">
           <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-xl animate-fade-in" onClick={() => setIsEditing(false)} />
           <div className="relative bg-slate-900 border border-slate-800 w-full max-w-4xl p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar animate-scale-in z-50">
             <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-minecraft text-emerald-400 uppercase tracking-widest">{currentProduct.id ? 'Mahsulotni tahrirlash' : 'Yangi Mahsulot'}</h2>
+              <h2 className="text-2xl font-minecraft text-emerald-400 uppercase tracking-widest">{currentProduct.id ? 'Tahrirlash' : 'Yangi Mahsulot'}</h2>
               <button onClick={() => setIsEditing(false)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl transition-all">
                 <X size={20} className="text-slate-400" />
               </button>
@@ -183,7 +184,7 @@ export const AdminProducts: React.FC = () => {
 
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
-                   <label className="block text-[10px] text-slate-500 uppercase font-bold tracking-widest">Tariflar (Maks 5 ta)</label>
+                   <label className="block text-[10px] text-slate-500 uppercase font-bold tracking-widest">Tariflar</label>
                    <button type="button" onClick={handleAddTariff} className="bg-emerald-500/10 text-emerald-400 text-[10px] font-bold px-4 py-2 rounded-xl border border-emerald-500/20 hover:bg-emerald-500/20 transition-all uppercase tracking-widest">
                       + Qo'shish
                    </button>
@@ -199,7 +200,7 @@ export const AdminProducts: React.FC = () => {
                           <div>
                             <label className="block text-[8px] text-slate-600 mb-1 uppercase font-bold tracking-widest">Tarif nomi</label>
                             <input 
-                              placeholder="1 oy" value={t.name} onChange={e => handleUpdateTariff(t.id, {name: e.target.value})}
+                              placeholder="30 kunlik" value={t.name} onChange={e => handleUpdateTariff(t.id, {name: e.target.value})}
                               className="w-full bg-slate-900 border border-slate-800 p-3 rounded-xl text-xs outline-none focus:border-emerald-500 font-bold"
                             />
                           </div>
@@ -220,16 +221,11 @@ export const AdminProducts: React.FC = () => {
                        </div>
                     </div>
                   ))}
-                  {(!currentProduct.tariffs || currentProduct.tariffs.length === 0) && (
-                    <div className="p-10 border-2 border-dashed border-slate-800 rounded-3xl text-center">
-                      <p className="text-slate-600 text-[10px] uppercase font-bold tracking-widest italic">Hali tariflar qo'shilmagan</p>
-                    </div>
-                  )}
                 </div>
               </div>
 
               <div className="lg:col-span-2 flex flex-col md:flex-row justify-end gap-4 pt-10 border-t border-slate-800">
-                <button type="button" onClick={() => setIsEditing(false)} className="px-10 py-4 rounded-2xl border border-slate-800 hover:bg-slate-800 transition-all font-bold uppercase text-[10px] tracking-widest">BEKOR QILISH</button>
+                <button type="button" onClick={() => setIsEditing(false)} className="px-10 py-4 rounded-2xl border border-slate-800 hover:bg-slate-800 transition-all font-bold uppercase text-[10px] tracking-widest">BEKOR</button>
                 <button type="submit" className="px-10 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 font-bold emerald-glow uppercase text-[10px] tracking-widest text-white shadow-xl">SAQLASH</button>
               </div>
             </form>
@@ -237,15 +233,13 @@ export const AdminProducts: React.FC = () => {
         </div>
       )}
 
-      {/* Delete Confirmation Modal - Outside animation container */}
       {showPassModal && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-sm" onClick={() => setShowPassModal(null)} />
           <div className="relative bg-slate-900 border border-rose-500/30 p-10 rounded-[2.5rem] max-w-sm w-full text-center shadow-2xl animate-scale-in z-50">
             <Trash2 className="mx-auto text-rose-500 mb-6 animate-pulse" size={56} />
-            <h3 className="text-xl font-bold mb-2 uppercase font-minecraft tracking-wider">O'CHIRISHNI TASDIQLANG</h3>
-            <p className="text-slate-500 text-xs mb-8 leading-relaxed">Bu mahsulot butunlay o'chiriladi. Amalni tasdiqlash uchun admin parolini kiriting.</p>
-            
+            <h3 className="text-xl font-bold mb-2 uppercase font-minecraft tracking-wider">O'CHIRISH</h3>
+            <p className="text-slate-500 text-xs mb-8 leading-relaxed">Admin parolini kiriting.</p>
             <div className="relative mb-6">
                <input 
                 type={showAdminPass ? "text" : "password"} value={adminPass} onChange={e => setAdminPass(e.target.value)}
@@ -253,18 +247,10 @@ export const AdminProducts: React.FC = () => {
                 placeholder="••••••••"
                 autoFocus
               />
-              <button 
-                type="button" 
-                onClick={() => setShowAdminPass(!showAdminPass)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-emerald-500"
-              >
-                {showAdminPass ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
             </div>
-
             <div className="flex space-x-3">
-              <button onClick={() => setShowPassModal(null)} className="flex-1 py-4 bg-slate-800 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-slate-700 transition-all">YO'Q</button>
-              <button onClick={confirmDelete} className="flex-1 py-4 bg-rose-600 rounded-2xl font-bold text-[10px] uppercase tracking-widest text-white hover:bg-rose-500 transition-all shadow-xl">HA, O'CHIR</button>
+              <button onClick={() => setShowPassModal(null)} className="flex-1 py-4 bg-slate-800 rounded-2xl font-bold text-[10px] uppercase tracking-widest">YO'Q</button>
+              <button onClick={confirmDelete} className="flex-1 py-4 bg-rose-600 rounded-2xl font-bold text-[10px] uppercase tracking-widest text-white shadow-xl">O'CHIRISH</button>
             </div>
           </div>
         </div>

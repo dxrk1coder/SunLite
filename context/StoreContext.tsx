@@ -87,12 +87,33 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const { data: oData } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
       if (oData) setOrders(oData.map((o: any) => ({
         id: o.id, userId: o.user_id, userNickname: o.user_nickname,
-        contact_info: o.contact_info, product_name: o.product_name,
-        tariff_name: o.tariff_name, price: o.price, status: o.status,
+        contactInfo: o.contact_info, productName: o.product_name,
+        tariffName: o.tariff_name, price: o.price, status: o.status,
         createdAt: o.created_at
       })));
     } catch (err) {
       console.error("Admin data fetch failed:", err);
+    }
+  }, []);
+
+  const fetchUserSpecificData = useCallback(async (userId: string) => {
+    if (!isSupabaseConfigured) return;
+    try {
+      const { data: pData } = await supabase.from('payments').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+      if (pData) setPayments(pData.map((p: any) => ({
+        id: p.id, userId: p.user_id, amount: p.amount, receiptUrl: p.receipt_url, 
+        status: p.status, rejectionReason: p.rejection_reason, createdAt: p.created_at
+      })));
+
+      const { data: oData } = await supabase.from('orders').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+      if (oData) setOrders(oData.map((o: any) => ({
+        id: o.id, userId: o.user_id, userNickname: o.user_nickname,
+        contactInfo: o.contact_info, productName: o.product_name,
+        tariffName: o.tariff_name, price: o.price, status: o.status,
+        createdAt: o.created_at
+      })));
+    } catch (err) {
+      console.error("User specific data fetch failed:", err);
     }
   }, []);
 
@@ -111,96 +132,55 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           ...p,
           tariffs: typeof p.tariffs === 'string' ? JSON.parse(p.tariffs) : p.tariffs
         })));
-      } else {
-        setProducts(MOCK_PRODUCTS);
       }
 
       if (currentSession?.user) {
         let { data: userData, error: fetchError } = await supabase.from('users').select('*').eq('id', currentSession.user.id).maybeSingle();
         
-        if (!userData && !fetchError) {
-          const rawName = currentSession.user.user_metadata?.full_name || currentSession.user.user_metadata?.name || currentSession.user.email?.split('@')[0];
-          const newUser = {
-            id: currentSession.user.id,
-            email: currentSession.user.email!,
-            nickname: (rawName || 'Gamer').replace(/\s+/g, '_'),
-            balance: 0,
-            role: UserRole.USER
-          };
-          const { data: createdUser, error: insertError } = await supabase.from('users').insert([newUser]).select().single();
-          if (!insertError) userData = createdUser;
-        }
-
         if (userData) {
           const mappedUser = { ...userData, createdAt: userData.created_at || userData.createdAt };
           setUser(mappedUser);
+          
           if (mappedUser.role === UserRole.ADMIN) {
             await fetchAdminData();
+          } else {
+            await fetchUserSpecificData(mappedUser.id);
           }
         }
       } else {
         setUser(null);
+        setPayments([]);
+        setOrders([]);
       }
       setDbConnected(true);
     } catch (err) {
       console.warn("Fetch Data Error:", err);
-      setProducts(MOCK_PRODUCTS);
     } finally {
       setLoading(false);
     }
-  }, [fetchAdminData]);
+  }, [fetchAdminData, fetchUserSpecificData]);
 
   useEffect(() => {
     fetchData();
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session) {
-        fetchData(session);
-      } else {
-        setUser(null);
-        setUsers([]);
-        setPayments([]);
-        setOrders([]);
-        setLoading(false);
-      }
+      fetchData(session);
     });
     return () => subscription.unsubscribe();
   }, [fetchData]);
 
-  // Realtime foydalanuvchi ma'lumotlarini kuzatish
   useEffect(() => {
     if (!user?.id || !isSupabaseConfigured) return;
-
     const channel = supabase
       .channel(`user-updates-${user.id}`)
-      .on('postgres_changes', { 
-        event: 'UPDATE', 
-        schema: 'public', 
-        table: 'users',
-        filter: `id=eq.${user.id}` 
-      }, (payload) => {
-        // Agar foydalanuvchining roli yoki balansi bazada o'zgarsa, UI-da darhol aks etadi
-        setUser(prev => prev ? { ...prev, ...payload.new } : null);
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users', filter: `id=eq.${user.id}` }, 
+        (payload) => { setUser(prev => prev ? { ...prev, ...payload.new } : null); }
+      ).subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, [user?.id]);
 
   const googleLogin = async () => {
     if (!isSupabaseConfigured) return;
-    try {
-      await supabase.auth.signInWithOAuth({ 
-        provider: 'google', 
-        options: { 
-          redirectTo: window.location.origin + '/login',
-          queryParams: { access_type: 'offline', prompt: 'select_account' }
-        } 
-      });
-    } catch (err) {
-      console.error("Google Auth Error:", err);
-    }
+    await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/login' } });
   };
 
   const login = async (email: string, pass: string) => {
@@ -210,13 +190,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const register = async (email: string, nickname: string, pass: string) => {
-    const { data, error: authError } = await supabase.auth.signUp({ 
-      email, password: pass, options: { data: { nickname } } 
-    });
+    const { data, error: authError } = await supabase.auth.signUp({ email, password: pass, options: { data: { nickname } } });
     if (authError) return { success: false, message: authError.message };
-    if (!data.user) return { success: false, message: 'Foydalanuvchi yaratilmadi.' };
-    
-    await supabase.from('users').upsert([{ id: data.user.id, email, nickname, balance: 0, role: UserRole.USER }]);
+    await supabase.from('users').upsert([{ id: data.user!.id, email, nickname, balance: 0, role: UserRole.USER }]);
     return { success: true };
   };
 
@@ -225,111 +201,92 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setUsers([]);
     setPayments([]);
     setOrders([]);
-    try {
-      await supabase.auth.signOut();
-    } catch (err) {
-      console.error("SignOut Error:", err);
-    }
-  };
-
-  const adminAddUser = async (userData: any, pass: string) => { 
-    const { data } = await supabase.auth.signUp({ email: userData.email, password: pass }); 
-    if (data.user) {
-      const { password, confirmPassword, ...cleanData } = userData;
-      await supabase.from('users').insert([{ id: data.user.id, ...cleanData }]); 
-    }
-    await fetchData(); 
+    await supabase.auth.signOut();
   };
 
   const adminUpdateUser = async (id: string, updates: any) => { 
-    // Faqat ruxsat berilgan maydonlarni yangilaymiz, id va created_at ni tashlab ketamiz
     const { id: _, created_at: __, createdAt: ___, email: ____, ...cleanUpdates } = updates;
     await supabase.from('users').update(cleanUpdates).eq('id', id); 
     await fetchData(); 
   };
 
-  const updateUserProfile = async (id: string, updates: Partial<User>) => { 
-    const { id: _, created_at: __, role: ___, ...cleanUpdates } = updates as any;
-    const { error } = await supabase.from('users').update(cleanUpdates).eq('id', id); 
-    await fetchData(); 
-    return !error; 
-  };
-
-  const deletePayment = async (id: string, adminPass: string) => { if (adminPass !== 'qazzaq') return false; await supabase.from('payments').delete().eq('id', id); await fetchData(); return true; };
-  const deleteOrder = async (id: string, adminPass: string) => { if (adminPass !== 'qazzaq') return false; await supabase.from('orders').delete().eq('id', id); await fetchData(); return true; };
-  const deleteUser = async (id: string, adminPass: string) => { if (adminPass !== 'qazzaq') return false; await supabase.from('users').delete().eq('id', id); await fetchData(); return true; };
-  const addProduct = async (p: Omit<Product, 'id'>) => { await supabase.from('products').insert([p]); await fetchData(); };
-  const updateProduct = async (id: string, p: Partial<Product>) => { await supabase.from('products').update(p).eq('id', id); await fetchData(); };
-  const deleteProduct = async (id: string, adminPass: string) => { if (adminPass !== 'qazzaq') return false; await supabase.from('products').delete().eq('id', id); await fetchData(); return true; };
-  const seedProducts = async () => { if (!dbConnected) return; await supabase.from('products').delete().neq('id', '0'); await supabase.from('products').insert(MOCK_PRODUCTS.map(({id, ...p}) => p)); await fetchData(); };
-
   const submitPayment = async (amount: number, receiptFile: File) => {
     if (!user || !dbConnected) return;
     try {
-      const fileExt = receiptFile.name.split('.').pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, receiptFile);
-      if (uploadError) throw uploadError;
-      
+      const fileName = `${user.id}-${Date.now()}`;
+      await supabase.storage.from('receipts').upload(fileName, receiptFile);
       const { data: { publicUrl } } = supabase.storage.from('receipts').getPublicUrl(fileName);
-      const { error: dbError } = await supabase.from('payments').insert([{ 
-        user_id: user.id, amount, receipt_url: publicUrl, status: PaymentStatus.PENDING 
-      }]);
-      
-      if (dbError) throw dbError;
-      addNotification('ADMIN', 'Yangi To\'lov!', `@${user.nickname} ${amount.toLocaleString()} UZS to'ladi.`, 'success');
-      addBroadcast('To\'lov ko\'rib chiqishga yuborildi!', 'success');
+      await supabase.from('payments').insert([{ user_id: user.id, amount, receipt_url: publicUrl, status: PaymentStatus.PENDING }]);
+      addNotification('ADMIN', 'Yangi To\'lov!', `@${user.nickname} to'lov qildi.`, 'success');
       await fetchData();
     } catch (err: any) {
-      addBroadcast('Xato: ' + err.message, 'error');
+      addBroadcast('To\'lovda xatolik: ' + err.message, 'error');
     }
   };
 
   const processPayment = async (id: string, status: PaymentStatus, reason?: string) => {
-    if (!dbConnected) return;
     const payment = payments.find(p => p.id === id);
     if (!payment) return;
-    
     if (status === PaymentStatus.APPROVED) {
-      const { data: currentUser } = await supabase.from('users').select('balance').eq('id', payment.userId).single();
-      await supabase.from('users').update({ balance: (currentUser?.balance || 0) + payment.amount }).eq('id', payment.userId);
-      addNotification(payment.userId, 'To\'lov tasdiqlandi!', `${payment.amount.toLocaleString()} UZS qo'shildi.`, 'success');
+      const { data: u } = await supabase.from('users').select('balance').eq('id', payment.userId).single();
+      await supabase.from('users').update({ balance: (u?.balance || 0) + payment.amount }).eq('id', payment.userId);
+      addNotification(payment.userId, 'To\'lov tasdiqlandi!', `${payment.amount.toLocaleString()} UZS balansingizga qo'shildi.`, 'success');
     } else if (status === PaymentStatus.REJECTED) {
-      addNotification(payment.userId, 'To\'lov rad etildi', `Sabab: ${reason || 'Xatolik'}`, 'error');
+      addNotification(payment.userId, 'To\'lov rad etildi', `Sabab: ${reason || 'Noma\'lum'}`, 'error');
     }
-
     await supabase.from('payments').update({ status, rejection_reason: reason }).eq('id', id);
     await fetchData();
   };
 
   const purchaseProduct = async (productId: string, tariffId: string, nickname: string, contactInfo: string) => {
-    const product = products.find(p => p.id === productId);
-    const tariff = product?.tariffs.find(t => t.id === tariffId);
-    if (!product || !tariff || !user || user.balance < tariff.price || !dbConnected) return false;
-
+    const prod = products.find(p => p.id === productId);
+    const tariff = prod?.tariffs.find(t => t.id === tariffId);
+    if (!prod || !tariff || !user || user.balance < tariff.price) return false;
     await supabase.from('users').update({ balance: user.balance - tariff.price }).eq('id', user.id);
-    await supabase.from('orders').insert([{
-      user_id: user.id, user_nickname: nickname, contact_info: contactInfo,
-      product_name: product.name, tariff_name: tariff.name, price: tariff.price, status: OrderStatus.PENDING
-    }]);
-
-    addNotification('ADMIN', 'Yangi Buyurtma!', `@${user.nickname}: ${product.name}`, 'info');
+    await supabase.from('orders').insert([{ user_id: user.id, user_nickname: nickname, contact_info: contactInfo, product_name: prod.name, tariff_name: tariff.name, price: tariff.price, status: OrderStatus.PENDING }]);
+    addNotification('ADMIN', 'Yangi Buyurtma!', `@${user.nickname} ${prod.name} sotib oldi.`, 'info');
     await fetchData();
     return true;
   };
 
   const processOrder = async (id: string, status: OrderStatus) => {
+    const order = orders.find(o => o.id === id);
+    if (!order) return;
+    if (status === OrderStatus.COMPLETED) {
+      addNotification(order.userId, 'Buyurtma bajarildi!', `${order.productName} faollashtirildi. Tabriklaymiz!`, 'success');
+    } else if (status === OrderStatus.CANCELLED) {
+      addNotification(order.userId, 'Buyurtma bekor qilindi', `Xarid qilingan ${order.productName} bekor qilindi. Iltimos, qo'llab-quvvatlash xizmati bilan bog'laning.`, 'error');
+    }
     await supabase.from('orders').update({ status }).eq('id', id);
     await fetchData();
   };
 
-  const addBroadcast = (message: string, type: Broadcast['type']) => setBroadcasts(prev => [{ id: Math.random().toString(), message, type, createdAt: new Date().toISOString() }, ...prev]);
-  const removeBroadcast = (id: string) => setBroadcasts(prev => prev.filter(b => b.id !== id));
-  const addNotification = (userId: string, title: string, message: string, type: Notification['type']) => setNotifications(prev => [{ id: Math.random().toString(), userId, title, message, type, isRead: false, createdAt: new Date().toISOString() }, ...prev]);
-  const markNotificationsAsRead = () => setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+  const addBroadcast = (message: string, type: any) => setBroadcasts(p => [{ id: Math.random().toString(), message, type, createdAt: new Date().toISOString() }, ...p]);
+  const removeBroadcast = (id: string) => setBroadcasts(p => p.filter(b => b.id !== id));
+  const addNotification = (userId: string, title: string, message: string, type: any) => setNotifications(p => [{ id: Math.random().toString(), userId, title, message, type, isRead: false, createdAt: new Date().toISOString() }, ...p]);
+  const markNotificationsAsRead = () => setNotifications(p => p.map(n => ({ ...n, isRead: true })));
   const clearNotifications = () => setNotifications([]);
-  const deleteNotification = (id: string) => setNotifications(prev => prev.filter(n => n.id !== id));
-  const updateConfig = (newConfig: SystemConfig) => setConfig(newConfig);
+  const deleteNotification = (id: string) => setNotifications(p => p.filter(n => n.id !== id));
+  
+  const updateUserProfile = async (id: string, updates: any) => { 
+    if (updates.email && updates.email !== user?.email) {
+      const { data: existing } = await supabase.from('users').select('id').eq('email', updates.email).maybeSingle();
+      if (existing) return false;
+    }
+    await supabase.from('users').update(updates).eq('id', id); 
+    await fetchData(); 
+    return true; 
+  };
+
+  const adminAddUser = async (u: any, p: string) => {};
+  const deleteUser = async (id: string, p: string) => { if(p === 'qazzaq') { await supabase.from('users').delete().eq('id', id); await fetchData(); return true; } return false; };
+  const deletePayment = async (id: string, p: string) => { if(p === 'qazzaq') { await supabase.from('payments').delete().eq('id', id); await fetchData(); return true; } return false; };
+  const deleteOrder = async (id: string, p: string) => { if(p === 'qazzaq') { await supabase.from('orders').delete().eq('id', id); await fetchData(); return true; } return false; };
+  const addProduct = async (p: any) => { await supabase.from('products').insert([p]); await fetchData(); };
+  const updateProduct = async (id: string, p: any) => { await supabase.from('products').update(p).eq('id', id); await fetchData(); };
+  const deleteProduct = async (id: string, p: string) => { if(p === 'qazzaq') { await supabase.from('products').delete().eq('id', id); await fetchData(); return true; } return false; };
+  const seedProducts = async () => { await supabase.from('products').insert(MOCK_PRODUCTS.map(({id, ...p}) => p)); await fetchData(); };
+  const updateConfig = (c: any) => setConfig(c);
 
   return (
     <StoreContext.Provider value={{
@@ -337,10 +294,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       login, googleLogin, logout, register,
       updateConfig, addProduct, updateProduct, deleteProduct, seedProducts,
       adminAddUser, adminUpdateUser, updateUserProfile, deleteUser,
-      deletePayment, deleteOrder,
-      submitPayment, processPayment,
-      purchaseProduct, processOrder,
-      addBroadcast, removeBroadcast,
+      deletePayment, deleteOrder, submitPayment, processPayment,
+      purchaseProduct, processOrder, addBroadcast, removeBroadcast,
       addNotification, markNotificationsAsRead, clearNotifications, deleteNotification
     }}>
       {children}

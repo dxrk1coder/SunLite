@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../context/StoreContext';
 import { Category, Product, Tariff } from '../types';
-import { ShoppingCart, Clock, Crown, Coins, Package, Gavel, AlertTriangle, X, ChevronRight, User, Send, CheckCircle2 } from 'lucide-react';
+import { ShoppingCart, Clock, Crown, Coins, Package, Gavel, AlertTriangle, X, ChevronRight, User, Send, CheckCircle2, ShieldAlert, HelpCircle } from 'lucide-react';
 
 export const Store: React.FC = () => {
   const { products, user, purchaseProduct, addBroadcast } = useStore();
@@ -166,19 +166,15 @@ export const Store: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal - Animatsiya konteyneridan tashqariga chiqarildi (fixed inset-0 ekranni to'liq egallaydi) */}
       {showModal && selectedProduct && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-2 md:p-6 overflow-hidden">
-          {/* Backdrop - Viewport bo'yicha qat'iy */}
           <div 
             className="fixed inset-0 bg-slate-950/95 backdrop-blur-xl animate-fade-in" 
             onClick={() => setShowModal(false)}
           ></div>
           
-          {/* Modal Content Container */}
-          <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-[2rem] md:rounded-[3rem] shadow-[0_0_100px_rgba(0,0,0,0.8)] flex flex-col md:flex-row max-h-[90vh] md:max-h-[85vh] overflow-hidden animate-scale-in z-50">
+          <div className="relative w-full max-w-5xl bg-slate-900 border border-slate-800 rounded-[2rem] md:rounded-[3rem] shadow-[0_0_100px_rgba(0,0,0,0.8)] flex flex-col md:flex-row max-h-[90vh] md:max-h-[85vh] overflow-hidden animate-scale-in z-50">
             
-            {/* Left Section: Info */}
             <div className="w-full md:w-2/5 bg-slate-950/40 p-6 md:p-10 flex flex-col border-b md:border-b-0 md:border-r border-slate-800 shrink-0 overflow-y-auto custom-scrollbar">
                <div className="flex md:flex-col items-center md:items-start gap-4 md:gap-6 mb-6">
                   <div className={`w-16 h-16 md:w-24 md:h-24 rounded-2xl md:rounded-3xl flex items-center justify-center ${getCategoryTheme(selectedProduct.category).bg} ${getCategoryTheme(selectedProduct.category).color} border border-white/5 shadow-2xl`}>
@@ -194,16 +190,25 @@ export const Store: React.FC = () => {
                
                <p className="text-slate-400 text-xs leading-relaxed mb-6 md:mb-10 opacity-80">{selectedProduct.description}</p>
                
-               <div className="mt-auto bg-slate-900 border border-slate-800/50 p-5 rounded-3xl">
-                  <p className="text-[9px] text-slate-500 uppercase font-bold tracking-[0.3em] mb-2">Umumiy to'lov:</p>
-                  <div className="flex items-baseline space-x-2">
-                    <span className="text-2xl md:text-4xl font-minecraft text-emerald-400">{selectedTariff?.price.toLocaleString()}</span>
-                    <span className="text-[10px] md:text-xs text-slate-500 font-bold uppercase">UZS</span>
+               <div className="mt-auto space-y-4">
+                  {/* Nickname Warning */}
+                  <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl flex items-start space-x-3 animate-pulse">
+                     <ShieldAlert className="text-rose-500 shrink-0 mt-0.5" size={16} />
+                     <p className="text-[10px] text-rose-200 font-bold uppercase leading-relaxed tracking-wider">
+                       DIQQAT: Nik 100% to'g'ri bo'lishi shart! Xato nik uchun mahsulot qaytarilmaydi.
+                     </p>
+                  </div>
+                  
+                  <div className="bg-slate-900 border border-slate-800/50 p-5 rounded-3xl">
+                    <p className="text-[9px] text-slate-500 uppercase font-bold tracking-[0.3em] mb-2">Umumiy to'lov:</p>
+                    <div className="flex items-baseline space-x-2">
+                      <span className="text-2xl md:text-4xl font-minecraft text-emerald-400">{selectedTariff?.price.toLocaleString()}</span>
+                      <span className="text-[10px] md:text-xs text-slate-500 font-bold uppercase">UZS</span>
+                    </div>
                   </div>
                </div>
             </div>
 
-            {/* Right Section: Form */}
             <div className="w-full md:w-3/5 flex flex-col overflow-y-auto custom-scrollbar bg-slate-900/50">
                <div className="sticky top-0 z-20 bg-slate-900/80 backdrop-blur-md p-6 md:p-8 flex justify-between items-center border-b border-slate-800/50">
                   <div>
@@ -218,9 +223,12 @@ export const Store: React.FC = () => {
                <div className="p-6 md:p-10 space-y-8">
                   <div className="space-y-6">
                     <div className="space-y-2">
-                       <label className="flex items-center space-x-2 text-[9px] font-bold text-slate-500 uppercase tracking-[0.3em] px-1">
-                          <User size={12} className="text-emerald-500" />
-                          <span>Minecraft Nickname</span>
+                       <label className="flex items-center justify-between px-1">
+                          <div className="flex items-center space-x-2 text-[9px] font-bold text-slate-500 uppercase tracking-[0.3em]">
+                            <User size={12} className="text-emerald-500" />
+                            <span>Minecraft Nickname</span>
+                          </div>
+                          <span className="text-[8px] text-rose-500 font-bold uppercase">100% To'g'ri yozing!</span>
                        </label>
                        <input 
                          type="text" value={nickname} onChange={(e) => setNickname(e.target.value)}
@@ -230,20 +238,29 @@ export const Store: React.FC = () => {
                     </div>
                     
                     <div className="space-y-2">
-                       <label className="flex items-center space-x-2 text-[9px] font-bold text-slate-500 uppercase tracking-[0.3em] px-1">
-                          <Send size={12} className="text-blue-400" />
-                          <span>Telegram Username</span>
+                       <label className="flex items-center justify-between px-1">
+                          <div className="flex items-center space-x-2 text-[9px] font-bold text-slate-500 uppercase tracking-[0.3em]">
+                            <Send size={12} className="text-blue-400" />
+                            <span>Telegram yoki Tel</span>
+                          </div>
+                          <div className="flex items-center space-x-1 text-slate-600 group cursor-help">
+                            <HelpCircle size={10} />
+                            <span className="text-[8px] uppercase font-bold">Aloqa uchun</span>
+                          </div>
                        </label>
                        <input 
                          type="text" value={contactInfo} onChange={(e) => setContactInfo(e.target.value)}
                          className="w-full bg-slate-950 border border-slate-800 p-4 md:p-5 rounded-2xl focus:border-emerald-500 outline-none transition-all font-bold text-slate-200 text-sm shadow-inner"
-                         placeholder="@username"
+                         placeholder="@username yoki +998..."
                        />
+                       <p className="text-[8px] text-slate-600 font-bold uppercase tracking-widest px-1">
+                         Eslatma: Muammo bo'lsa bog'lanishimiz uchun Telegram yoki tel qoldiring.
+                       </p>
                     </div>
                   </div>
 
                   <div className="space-y-4">
-                    <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-[0.3em] px-1">Muddatni tanlang</label>
+                    <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-[0.3em] px-1">Amal qilish muddati</label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {selectedProduct.tariffs.map(t => (
                         <button
@@ -268,7 +285,7 @@ export const Store: React.FC = () => {
                   <div className="bg-amber-500/5 border border-amber-500/10 p-4 rounded-2xl flex items-start space-x-3">
                      <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={14} />
                      <p className="text-[9px] text-amber-200/60 font-bold uppercase leading-relaxed tracking-[0.1em]">
-                       To'lov balansingizdan yechiladi. Buyurtma admin tomonidan tasdiqlanganidan so'ng faollashadi.
+                       Mablag' balansingizdan yechiladi. Buyurtma admin tomonidan tekshirilgach o'yin ichida faollashadi.
                      </p>
                   </div>
 
@@ -283,7 +300,7 @@ export const Store: React.FC = () => {
                       ) : (
                         <>
                           <ShoppingCart size={18} />
-                          <span>Tasdiqlash va Xarid qilish</span>
+                          <span>Tasdiqlash va Xarid</span>
                           <ChevronRight size={14} />
                         </>
                       )}

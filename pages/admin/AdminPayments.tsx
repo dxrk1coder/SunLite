@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { PaymentStatus } from '../../types';
-import { Check, X, Eye, Clock, User, Trash2, ShieldAlert, Mail, EyeOff } from 'lucide-react';
+import { Check, X, Eye, Clock, User, Trash2, ShieldAlert, Mail, EyeOff, ZoomIn, Download } from 'lucide-react';
 
 export const AdminPayments: React.FC = () => {
   const { payments, processPayment, deletePayment, addBroadcast } = useStore();
@@ -13,6 +13,9 @@ export const AdminPayments: React.FC = () => {
   const [showPassModal, setShowPassModal] = useState<string | null>(null);
   const [adminPass, setAdminPass] = useState('');
   const [showAdminPass, setShowAdminPass] = useState(false);
+  
+  // Image zoom state
+  const [zoomImg, setZoomImg] = useState<string | null>(null);
 
   const pendingPayments = payments.filter(p => p.status === PaymentStatus.PENDING);
   const otherPayments = payments.filter(p => p.status !== PaymentStatus.PENDING);
@@ -69,13 +72,13 @@ export const AdminPayments: React.FC = () => {
             {pendingPayments.map(p => (
               <div key={p.id} className="bg-slate-950 border border-slate-800 p-6 rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-6 hover:border-emerald-500/30 transition-all">
                 <div className="flex items-center space-x-6">
-                  <div className="w-20 h-20 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center overflow-hidden group/receipt relative">
+                  <div className="w-20 h-20 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center overflow-hidden group/receipt relative cursor-zoom-in">
                     <img src={p.receiptUrl} alt="Chek" className="w-full h-full object-cover" />
                     <button 
-                      onClick={() => window.open(p.receiptUrl, '_blank')}
+                      onClick={() => setZoomImg(p.receiptUrl)}
                       className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover/receipt:opacity-100 transition-opacity flex items-center justify-center"
                     >
-                      <Eye size={20} className="text-emerald-400" />
+                      <ZoomIn size={24} className="text-emerald-400" />
                     </button>
                   </div>
                   <div>
@@ -134,7 +137,7 @@ export const AdminPayments: React.FC = () => {
                       </td>
                       <td className="py-4 px-6 text-right">
                         <div className="flex justify-end space-x-2">
-                          <button onClick={() => window.open(p.receiptUrl, '_blank')} className="p-2 text-slate-500 hover:text-emerald-400"><Eye size={14}/></button>
+                          <button onClick={() => setZoomImg(p.receiptUrl)} className="p-2 text-slate-500 hover:text-emerald-400"><Eye size={14}/></button>
                           <button onClick={() => setShowPassModal(p.id)} className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-lg"><Trash2 size={14}/></button>
                         </div>
                       </td>
@@ -147,7 +150,26 @@ export const AdminPayments: React.FC = () => {
         </div>
       </div>
 
-      {/* Approve Confirmation Modal - Viewport centered */}
+      {/* Image Zoom Modal */}
+      {zoomImg && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-xl" onClick={() => setZoomImg(null)} />
+           <div className="relative max-w-4xl w-full h-[80vh] bg-slate-900 rounded-[2rem] overflow-hidden shadow-2xl animate-scale-in border border-slate-800 flex flex-col">
+              <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+                 <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">To'lov cheki</h3>
+                 <div className="flex space-x-2">
+                    <a href={zoomImg} download className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 transition-all"><Download size={18}/></a>
+                    <button onClick={() => setZoomImg(null)} className="p-2 bg-rose-600 text-white rounded-lg hover:bg-rose-500 transition-all"><X size={18}/></button>
+                 </div>
+              </div>
+              <div className="flex-grow p-4 md:p-8 flex items-center justify-center bg-slate-950 overflow-hidden">
+                 <img src={zoomImg} className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" alt="Receipt Full" />
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* Approve Confirmation Modal */}
       {isApproving && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md" onClick={() => setIsApproving(null)} />
@@ -163,7 +185,7 @@ export const AdminPayments: React.FC = () => {
         </div>
       )}
 
-      {/* Reject Modal - Viewport centered */}
+      {/* Reject Modal */}
       {isRejecting && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md" onClick={() => setIsRejecting(false)} />
@@ -185,7 +207,7 @@ export const AdminPayments: React.FC = () => {
         </div>
       )}
 
-      {/* Delete Confirmation Modal - Viewport centered */}
+      {/* Delete Confirmation Modal */}
       {showPassModal && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-sm" onClick={() => setShowPassModal(null)} />

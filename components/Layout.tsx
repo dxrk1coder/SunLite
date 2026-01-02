@@ -6,7 +6,7 @@ import {
   Menu, X, LayoutDashboard, ShoppingCart, 
   Wallet, Settings, LogOut, User as UserIcon,
   Bell, ShieldCheck, CheckCheck, Trash2, HelpCircle,
-  Wrench, ArrowLeft, ChevronRight
+  Wrench, ArrowLeft, ChevronRight, Activity
 } from 'lucide-react';
 import { UserRole } from '../types';
 
@@ -31,7 +31,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Sahifa o'zgarganda menyuni yopish
   useEffect(() => {
     setIsMenuOpen(false);
   }, [location.pathname]);
@@ -42,6 +41,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     navigate('/login');
   };
 
+  // Maintenance logic: Only blocks non-admins
   const isMaintenanceActive = config.maintenanceMode && user?.role !== UserRole.ADMIN;
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 
@@ -73,24 +73,49 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col relative">
-      {/* Maintenance Overlay */}
+      {/* Maintenance Overlay - Premium Design */}
       {isMaintenanceActive && !isAuthPage && (
         <div className="fixed inset-0 z-[9999] bg-slate-950 flex flex-col items-center justify-center p-6 text-center overflow-hidden">
           <div className="absolute inset-0 z-0">
-             <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/5 blur-[120px] animate-pulse" />
-             <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-amber-500/5 blur-[120px] animate-pulse delay-1000" />
+             <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-emerald-500/10 blur-[150px] animate-pulse" />
+             <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-blue-500/5 blur-[150px] animate-pulse delay-1000" />
+             <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'radial-gradient(#10b981 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
           </div>
-          <div className="relative z-10 animate-scale-in flex flex-col items-center">
-            <div className="w-24 h-24 bg-amber-500/10 border border-amber-500/30 rounded-[2rem] flex items-center justify-center mb-10 shadow-2xl relative">
-               <Wrench size={48} className="text-amber-500" />
+          
+          <div className="relative z-10 animate-scale-in flex flex-col items-center max-w-2xl">
+            <div className="relative mb-12">
+               <div className="absolute inset-0 bg-amber-500/20 blur-3xl animate-pulse" />
+               <div className="w-32 h-32 bg-slate-900 border border-amber-500/30 rounded-[3rem] flex items-center justify-center shadow-2xl relative z-10">
+                  <Wrench size={56} className="text-amber-500 animate-bounce-slow" />
+               </div>
+               <div className="absolute -top-4 -right-4 bg-slate-950 border border-slate-800 p-3 rounded-2xl text-emerald-400 animate-spin-slow">
+                  <Activity size={24} />
+               </div>
             </div>
-            <h1 className="text-4xl md:text-6xl font-minecraft text-white mb-6 uppercase tracking-widest">
-              TEXNIK <span className="text-amber-500">ISHAR</span>
+
+            <h1 className="text-5xl md:text-7xl font-minecraft text-white mb-6 uppercase tracking-[0.2em] leading-none">
+              TEXNIK <span className="text-amber-500">ISHLAR</span>
             </h1>
-            <p className="text-slate-500 max-w-md mb-12 text-sm font-medium">Saytda yangilanishlar ketmoqda. Tez orada qaytamiz!</p>
-            <button onClick={handleLogout} className="bg-slate-900 border border-slate-800 text-slate-400 px-8 py-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest">
-              Login sahifasiga
-            </button>
+            
+            <div className="h-1 w-32 bg-amber-500/30 rounded-full mb-8" />
+            
+            <p className="text-slate-400 text-lg md:text-xl mb-12 font-medium leading-relaxed">
+              SUNLITE.GG hozirda takomillashtirilmoqda. Biz siz uchun eng so'nggi texnologiyalarni va xavfsizlik tizimlarini joriy etyapmiz. Tez orada yanada kuchliroq qaytamiz!
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+               <button onClick={handleLogout} className="bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 px-10 py-5 rounded-2xl font-bold uppercase text-[10px] tracking-widest flex items-center space-x-3 transition-all">
+                 <ArrowLeft size={16} />
+                 <span>Login sahifasiga</span>
+               </button>
+               <a href={config.telegramSupport} target="_blank" className="bg-emerald-600 hover:bg-emerald-500 text-white px-10 py-5 rounded-2xl font-bold uppercase text-[10px] tracking-widest emerald-glow transition-all">
+                 Yordam markazi
+               </a>
+            </div>
+          </div>
+          
+          <div className="absolute bottom-10 text-[10px] font-bold text-slate-700 uppercase tracking-[0.5em]">
+             Sunlite System v2.5.0 • Protected by Arcanum
           </div>
         </div>
       )}
@@ -251,7 +276,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center group-hover:rotate-12 transition-transform">
                     <ShieldCheck size={20} className="text-white" />
                   </div>
-                  <span className="font-minecraft text-2xl tracking-widest text-emerald-400 uppercase">SUNLITE.GG</span>
+                  <span className="font-minecraft text-2xl tracking-widest text-emerald-400 uppercase">{config.siteName}</span>
                </div>
                <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-slate-600">O'zbekistondagi eng barqaror server</p>
             </div>

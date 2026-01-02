@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { StoreProvider, useStore } from './context/StoreContext.tsx';
 import { Layout } from './components/Layout.tsx';
 import { LoadingScreen } from './components/LoadingScreen.tsx';
@@ -18,13 +18,16 @@ import { AdminOrders } from './pages/admin/AdminOrders.tsx';
 import { AdminUsers } from './pages/admin/AdminUsers.tsx';
 import { 
   Users, ShoppingBag, CreditCard, 
-  Settings, Megaphone, BarChart3, History
+  Settings, Megaphone, BarChart3, History,
+  ArrowRight, Clock, AlertCircle
 } from 'lucide-react';
 
 const AdminDashboard = () => {
   const { users, products, payments, orders } = useStore();
+  
   const totalSales = orders.filter(o => o.status === 'COMPLETED').reduce((sum, o) => sum + o.price, 0);
-  const pendingPayments = payments.filter(p => p.status === 'PENDING').length;
+  const pendingPayments = payments.filter(p => p.status === 'PENDING');
+  const pendingOrders = orders.filter(o => o.status === 'PENDING');
 
   return (
     <div className="space-y-12 animate-fade-in">
@@ -39,12 +42,42 @@ const AdminDashboard = () => {
           </div>
        </div>
 
-       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+       {/* Tezkor Tugmalar (Quick Actions) */}
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Link to="/admin/payments" className="group bg-amber-500/10 border border-amber-500/20 p-8 rounded-[2.5rem] flex items-center justify-between hover:bg-amber-500/20 transition-all">
+             <div className="flex items-center space-x-6">
+                <div className="w-16 h-16 bg-amber-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-amber-500/20">
+                   <Clock size={32} />
+                </div>
+                <div>
+                   <h3 className="text-xl font-minecraft text-amber-400 uppercase">To'lovlar</h3>
+                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{pendingPayments.length} kutilmoqda</p>
+                </div>
+             </div>
+             <ArrowRight className="text-slate-700 group-hover:text-amber-400 group-hover:translate-x-2 transition-all" />
+          </Link>
+
+          <Link to="/admin/orders" className="group bg-emerald-500/10 border border-emerald-500/20 p-8 rounded-[2.5rem] flex items-center justify-between hover:bg-emerald-500/20 transition-all">
+             <div className="flex items-center space-x-6">
+                <div className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+                   <ShoppingBag size={32} />
+                </div>
+                <div>
+                   <h3 className="text-xl font-minecraft text-emerald-400 uppercase">Buyurtmalar</h3>
+                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{pendingOrders.length} yangi</p>
+                </div>
+             </div>
+             <ArrowRight className="text-slate-700 group-hover:text-emerald-400 group-hover:translate-x-2 transition-all" />
+          </Link>
+       </div>
+
+       {/* Asosiy Statistika */}
+       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
             { label: 'Gamerlar', val: users.length, color: 'text-blue-500', icon: Users },
             { label: 'Mahsulotlar', val: products.length, color: 'text-purple-500', icon: ShoppingBag },
             { label: 'Jami Savdo', val: totalSales.toLocaleString(), color: 'text-emerald-500', icon: BarChart3 },
-            { label: 'To\'lovlar', val: pendingPayments, color: 'text-amber-500', icon: CreditCard },
+            { label: 'To\'lovlar', val: payments.length, color: 'text-amber-500', icon: CreditCard },
           ].map(s => (
             <div key={s.label} className="bg-slate-950 p-8 rounded-[2.5rem] border border-slate-800 hover:border-emerald-500/20 transition-all group relative overflow-hidden">
                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform">
