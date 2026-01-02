@@ -16,9 +16,9 @@ export const INITIAL_SYSTEM_CONFIG: SystemConfig = {
   }
 };
 
-const createTariffs = (thirtyDaysPrice: number, sixtyDaysPrice: number) => [
-  { id: Math.random().toString(36).substr(2, 5), name: '30 kunlik', price: thirtyDaysPrice, duration: '30 kun' },
-  { id: Math.random().toString(36).substr(2, 5), name: '60 kunlik', price: sixtyDaysPrice, duration: '60 kun' }
+const createTariffs = (prefix: string, thirtyDaysPrice: number, sixtyDaysPrice: number) => [
+  { id: `${prefix}-30`, name: '30 kunlik', price: thirtyDaysPrice, duration: '30 kun' },
+  { id: `${prefix}-60`, name: '60 kunlik', price: sixtyDaysPrice, duration: '60 kun' }
 ];
 
 export const MOCK_PRODUCTS: Product[] = [
@@ -41,7 +41,7 @@ export const MOCK_PRODUCTS: Product[] = [
     category: Category.RANKS,
     image: 'https://picsum.photos/seed/eclipse/400/300',
     active: true,
-    tariffs: createTariffs(7000, 13000)
+    tariffs: createTariffs('eclipse', 7000, 13000)
   },
   {
     id: 'p-phoenix',
@@ -50,7 +50,7 @@ export const MOCK_PRODUCTS: Product[] = [
     category: Category.RANKS,
     image: 'https://picsum.photos/seed/phoenix/400/300',
     active: true,
-    tariffs: createTariffs(12000, 22000)
+    tariffs: createTariffs('phoenix', 12000, 22000)
   },
   {
     id: 'p-oracle',
@@ -59,7 +59,7 @@ export const MOCK_PRODUCTS: Product[] = [
     category: Category.RANKS,
     image: 'https://picsum.photos/seed/oracle/400/300',
     active: true,
-    tariffs: createTariffs(18000, 32000)
+    tariffs: createTariffs('oracle', 18000, 32000)
   },
   {
     id: 'p-voyager',
@@ -68,7 +68,7 @@ export const MOCK_PRODUCTS: Product[] = [
     category: Category.RANKS,
     image: 'https://picsum.photos/seed/voyager/400/300',
     active: true,
-    tariffs: createTariffs(24000, 42000)
+    tariffs: createTariffs('voyager', 24000, 42000)
   },
   {
     id: 'p-catalyst',
@@ -77,7 +77,7 @@ export const MOCK_PRODUCTS: Product[] = [
     category: Category.RANKS,
     image: 'https://picsum.photos/seed/catalyst/400/300',
     active: true,
-    tariffs: createTariffs(34000, 55000)
+    tariffs: createTariffs('catalyst', 34000, 55000)
   },
   {
     id: 'p-celestial',
@@ -86,7 +86,7 @@ export const MOCK_PRODUCTS: Product[] = [
     category: Category.RANKS,
     image: 'https://picsum.photos/seed/celestial/400/300',
     active: true,
-    tariffs: createTariffs(49000, 75000)
+    tariffs: createTariffs('celestial', 49000, 75000)
   },
   {
     id: 'p-aurora',
@@ -95,7 +95,7 @@ export const MOCK_PRODUCTS: Product[] = [
     category: Category.RANKS,
     image: 'https://picsum.photos/seed/aurora/400/300',
     active: true,
-    tariffs: createTariffs(60000, 95000)
+    tariffs: createTariffs('aurora', 60000, 95000)
   },
   {
     id: 'p-immortal',
@@ -104,7 +104,7 @@ export const MOCK_PRODUCTS: Product[] = [
     category: Category.RANKS,
     image: 'https://picsum.photos/seed/immortal/400/300',
     active: true,
-    tariffs: createTariffs(85000, 145000)
+    tariffs: createTariffs('immortal', 85000, 145000)
   },
   {
     id: 'p-apex',
@@ -113,7 +113,7 @@ export const MOCK_PRODUCTS: Product[] = [
     category: Category.RANKS,
     image: 'https://picsum.photos/seed/apex/400/300',
     active: true,
-    tariffs: createTariffs(99000, 165000)
+    tariffs: createTariffs('apex', 99000, 165000)
   },
   {
     id: 'p-luminary',
@@ -122,7 +122,7 @@ export const MOCK_PRODUCTS: Product[] = [
     category: Category.RANKS,
     image: 'https://picsum.photos/seed/luminary/400/300',
     active: true,
-    tariffs: createTariffs(130000, 220000)
+    tariffs: createTariffs('luminary', 130000, 220000)
   },
   {
     id: 'p-great',
@@ -131,7 +131,7 @@ export const MOCK_PRODUCTS: Product[] = [
     category: Category.RANKS,
     image: 'https://picsum.photos/seed/great/400/300',
     active: true,
-    tariffs: createTariffs(169000, 295000)
+    tariffs: createTariffs('great', 169000, 295000)
   },
   {
     id: 'p-vales-100',
@@ -140,7 +140,7 @@ export const MOCK_PRODUCTS: Product[] = [
     category: Category.COINS,
     image: 'https://picsum.photos/seed/v100/400/300',
     active: true,
-    tariffs: [{ id: 'v1', name: 'Paket', price: 10000, duration: 'Tezkor' }]
+    tariffs: [{ id: 'vales-100', name: 'Paket', price: 10000, duration: 'Tezkor' }]
   },
   {
     id: 'p-vales-1000',
@@ -149,7 +149,7 @@ export const MOCK_PRODUCTS: Product[] = [
     category: Category.COINS,
     image: 'https://picsum.photos/seed/v1000/400/300',
     active: true,
-    tariffs: [{ id: 'v2', name: 'Paket', price: 100000, duration: 'Tezkor' }]
+    tariffs: [{ id: 'vales-1000', name: 'Paket', price: 100000, duration: 'Tezkor' }]
   },
   {
     id: 'p-case-donat',
@@ -158,7 +158,7 @@ export const MOCK_PRODUCTS: Product[] = [
     category: Category.KEYS,
     image: 'https://picsum.photos/seed/cd/400/300',
     active: true,
-    tariffs: [{ id: 'c1', name: '1 dona', price: 10000, duration: 'Tezkor' }]
+    tariffs: [{ id: 'case-donat', name: '1 dona', price: 10000, duration: 'Tezkor' }]
   },
   {
     id: 'p-case-token',
@@ -167,7 +167,7 @@ export const MOCK_PRODUCTS: Product[] = [
     category: Category.KEYS,
     image: 'https://picsum.photos/seed/ct/400/300',
     active: true,
-    tariffs: [{ id: 'c2', name: '1 dona', price: 30000, duration: 'Tezkor' }]
+    tariffs: [{ id: 'case-token', name: '1 dona', price: 30000, duration: 'Tezkor' }]
   },
   {
     id: 'p-unban',
@@ -176,6 +176,6 @@ export const MOCK_PRODUCTS: Product[] = [
     category: Category.UNBAN,
     image: 'https://picsum.photos/seed/unban/400/300',
     active: true,
-    tariffs: [{ id: 'ub1', name: 'Xizmat', price: 15000, duration: 'Tezkor' }]
+    tariffs: [{ id: 'unban-fix', name: 'Xizmat', price: 15000, duration: 'Tezkor' }]
   }
 ];

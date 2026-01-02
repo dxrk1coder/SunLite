@@ -5,8 +5,8 @@ import { useStore } from '../context/StoreContext';
 import { 
   Menu, X, LayoutDashboard, ShoppingCart, 
   Wallet, Settings, LogOut, User as UserIcon,
-  Bell, ShieldCheck, CheckCheck, Trash2, HelpCircle,
-  Wrench, ArrowLeft, ChevronRight, Activity, Wifi, WifiOff
+  Bell, CheckCheck, Trash2, HelpCircle,
+  Wrench, ArrowLeft, Activity, Wifi, WifiOff, ShieldCheck
 } from 'lucide-react';
 import { UserRole } from '../types';
 
@@ -47,6 +47,60 @@ const NetworkIndicator = () => {
     </div>
   );
 };
+
+// Mukammal va Attractive Minecraft Emerald Logo Komponenti
+export const LogoComponent = ({ className = "h-14" }: { className?: string }) => (
+  <div className={`${className} aspect-square flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl group transition-all relative animate-float logo-container`}>
+    
+    {/* Sunray Particles (Back Layer) */}
+    <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full opacity-60">
+      <g className="animate-ray origin-center">
+        <rect x="46" y="2" width="8" height="15" fill="#fbbf24" rx="1" />
+        <rect x="46" y="83" width="8" height="15" fill="#fbbf24" rx="1" />
+        <rect x="2" y="46" width="15" height="8" fill="#fbbf24" rx="1" />
+        <rect x="83" y="46" width="15" height="8" fill="#fbbf24" rx="1" />
+        
+        <rect x="20" y="20" width="8" height="8" fill="#fbbf24" opacity="0.5" />
+        <rect x="72" y="20" width="8" height="8" fill="#fbbf24" opacity="0.5" />
+        <rect x="20" y="72" width="8" height="8" fill="#fbbf24" opacity="0.5" />
+        <rect x="72" y="72" width="8" height="8" fill="#fbbf24" opacity="0.5" />
+      </g>
+    </svg>
+
+    {/* Main 3D Emerald Block */}
+    <svg viewBox="0 0 100 100" className="w-[70%] h-[70%] z-10 drop-shadow-2xl transform group-hover:scale-110 transition-transform duration-500">
+      {/* Front faces shadows */}
+      <path d="M50 20 L85 37.5 L85 72.5 L50 90 L15 72.5 L15 37.5 Z" fill="black" opacity="0.3" />
+
+      {/* Front Left Face (Emerald Green Deep) */}
+      <path d="M50 55 L15 37.5 L15 72.5 L50 90 Z" fill="#059669" />
+      
+      {/* Front Right Face (Emerald Green Main) */}
+      <path d="M50 55 L85 37.5 L85 72.5 L50 90 Z" fill="#10b981" />
+      
+      {/* Top Face (Emerald Green Light / Lit by Sun) */}
+      <path d="M50 20 L85 37.5 L50 55 L15 37.5 Z" fill="#34d399" />
+
+      {/* Details/Facets */}
+      <path d="M50 20 L65 27.5 L50 35 L35 27.5 Z" fill="white" opacity="0.4" />
+      <path d="M15 37.5 L50 55 L50 65 L15 47.5 Z" fill="white" opacity="0.1" />
+      
+      {/* Magic Glints (Square pixels) */}
+      <rect x="25" y="45" width="5" height="5" fill="white" opacity="0.5">
+        <animate attributeName="opacity" values="0.2;0.8;0.2" dur="2s" repeatCount="indefinite" />
+      </rect>
+      <rect x="65" y="60" width="4" height="4" fill="white" opacity="0.4">
+        <animate attributeName="opacity" values="0.1;0.6;0.1" dur="2.5s" repeatCount="indefinite" />
+      </rect>
+      <rect x="55" y="30" width="3" height="3" fill="white" opacity="0.6">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="1.5s" repeatCount="indefinite" />
+      </rect>
+    </svg>
+
+    {/* Enchanted Item Overlay (Shimmer) */}
+    <div className="absolute inset-0 shimmer-effect opacity-30 pointer-events-none"></div>
+  </div>
+);
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { 
@@ -96,6 +150,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     return (
       <Link
         to={to}
+        onClick={() => setIsMenuOpen(false)}
         className={`flex items-center space-x-3 px-6 py-4 rounded-2xl transition-all duration-300 ${
           isActive 
             ? 'bg-emerald-500 text-white emerald-glow shadow-lg' 
@@ -112,37 +167,24 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col relative">
       {isMaintenanceActive && !isAuthPage && (
         <div className="fixed inset-0 z-[9999] bg-slate-950 flex flex-col items-center justify-center p-6 text-center overflow-hidden">
-          <div className="absolute inset-0 z-0">
-             <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-emerald-500/10 blur-[150px] animate-pulse" />
-             <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-blue-500/5 blur-[150px] animate-pulse delay-1000" />
-             <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'radial-gradient(#10b981 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
-          </div>
-          
           <div className="relative z-10 animate-scale-in flex flex-col items-center max-w-2xl">
-            <div className="relative mb-12">
-               <div className="absolute inset-0 bg-amber-500/20 blur-3xl animate-pulse" />
-               <div className="w-32 h-32 bg-slate-900 border border-amber-500/30 rounded-[3rem] flex items-center justify-center shadow-2xl relative z-10">
-                  <Wrench size={56} className="text-amber-500 animate-bounce-slow" />
-               </div>
-               <div className="absolute -top-4 -right-4 bg-slate-950 border border-slate-800 p-3 rounded-2xl text-emerald-400 animate-spin-slow">
-                  <Activity size={24} />
-               </div>
+            <div className="relative mb-12 group">
+               <div className="absolute inset-0 bg-emerald-500/20 blur-3xl animate-pulse" />
+               <LogoComponent className="h-40 md:h-56 border-emerald-500/20" />
             </div>
 
-            <h1 className="text-5xl md:text-7xl font-minecraft text-white mb-6 uppercase tracking-[0.2em] leading-none">
+            <h1 className="text-5xl md:text-7xl font-minecraft text-white mb-6 uppercase tracking-[0.2em] leading-none text-center">
               TEXNIK <span className="text-amber-500">ISHLAR</span>
             </h1>
             
-            <div className="h-1 w-32 bg-amber-500/30 rounded-full mb-8" />
-            
-            <p className="text-slate-400 text-lg md:text-xl mb-12 font-medium leading-relaxed">
+            <p className="text-slate-400 text-lg md:text-xl mb-12 font-medium leading-relaxed px-4">
               SUNLITE.GG hozirda takomillashtirilmoqda. Tez orada yanada kuchliroq qaytamiz!
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-4">
                <button onClick={handleLogout} className="bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 px-10 py-5 rounded-2xl font-bold uppercase text-[10px] tracking-widest flex items-center space-x-3 transition-all">
                  <ArrowLeft size={16} />
-                 <span>Login sahifasiga</span>
+                 <span>Chiqish</span>
                </button>
                <a href={config.telegramSupport} target="_blank" className="bg-emerald-600 hover:bg-emerald-500 text-white px-10 py-5 rounded-2xl font-bold uppercase text-[10px] tracking-widest emerald-glow transition-all">
                  Yordam markazi
@@ -164,15 +206,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         ))}
       </div>
 
-      <nav className="sticky top-0 z-[100] bg-slate-950/80 backdrop-blur-xl border-b border-slate-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-20 items-center">
-            <div className="flex items-center space-x-8">
-              <Link to="/" className="flex items-center space-x-3 group">
-                <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center emerald-glow transition-transform group-hover:rotate-12">
-                  <ShieldCheck className="text-white" size={24} />
-                </div>
-                <span className="font-minecraft text-2xl tracking-widest text-emerald-400 uppercase">{config.siteName}</span>
+      <nav className="sticky top-0 z-[100] bg-slate-950/80 backdrop-blur-xl border-b border-slate-900 h-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+          <div className="flex justify-between h-full items-center">
+            <div className="flex items-center space-x-4">
+              <Link to="/" className="flex items-center space-x-4 group">
+                <LogoComponent />
+                <span className="font-minecraft text-3xl tracking-widest text-emerald-400 uppercase hidden sm:block">{config.siteName}</span>
               </Link>
               <div className="hidden lg:block">
                 <NetworkIndicator />
@@ -245,7 +285,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               <NetworkIndicator />
               <button 
                 onClick={() => setIsMenuOpen(!isMenuOpen)} 
-                className={`p-3 rounded-xl transition-all ${isMenuOpen ? 'bg-emerald-500 text-white' : 'bg-slate-900 text-slate-400 border border-slate-800'}`}
+                className={`p-3 rounded-xl transition-all ${isMenuOpen ? 'bg-emerald-500 text-white shadow-lg' : 'bg-slate-900 text-slate-400 border border-slate-800'}`}
               >
                 {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
@@ -253,8 +293,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           </div>
         </div>
 
-        <div className={`md:hidden fixed inset-x-0 top-20 bg-slate-950/95 backdrop-blur-2xl border-b border-slate-900 transition-all duration-300 overflow-hidden z-[90] ${isMenuOpen ? 'max-h-[85vh] opacity-100 py-6' : 'max-h-0 opacity-0 py-0'}`}>
-          <div className="px-4 flex flex-col space-y-2">
+        <div className={`md:hidden fixed inset-x-0 top-20 bg-slate-950/98 backdrop-blur-3xl border-b border-slate-900 transition-all duration-300 overflow-hidden z-[110] ${isMenuOpen ? 'max-h-[90vh] opacity-100 py-8 shadow-2xl' : 'max-h-0 opacity-0 py-0'}`}>
+          <div className="px-6 flex flex-col space-y-3">
             <NavLink to="/" icon={LayoutDashboard} label="Bosh sahifa" />
             <NavLink to="/store" icon={ShoppingCart} label="Do'kon" />
             
@@ -264,10 +304,10 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 {user.role === UserRole.ADMIN && <NavLink to="/admin" icon={Settings} label="Admin Panel" adminOnly />}
                 <NavLink to="/profile" icon={UserIcon} label="Profil" />
                 
-                <div className="pt-4 mt-4 border-t border-slate-900">
+                <div className="pt-6 mt-4 border-t border-slate-900">
                   <button 
                     onClick={handleLogout}
-                    className="w-full flex items-center justify-center space-x-3 p-5 rounded-2xl bg-rose-600/10 text-rose-500 font-bold uppercase text-[11px] tracking-widest border border-rose-500/20"
+                    className="w-full flex items-center justify-center space-x-3 p-5 rounded-2xl bg-rose-600/10 text-rose-500 font-bold uppercase text-[11px] tracking-widest border border-rose-500/20 active:scale-95 transition-transform"
                   >
                     <LogOut size={18} />
                     <span>Tizimdan chiqish</span>
@@ -278,7 +318,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               <Link 
                 to="/login" 
                 onClick={() => setIsMenuOpen(false)}
-                className="w-full bg-emerald-600 text-white py-5 rounded-2xl font-bold uppercase text-center text-[11px] tracking-widest emerald-glow"
+                className="w-full bg-emerald-600 text-white py-5 rounded-2xl font-bold uppercase text-center text-[11px] tracking-widest emerald-glow shadow-xl active:scale-95 transition-transform"
               >
                 Kirish / Ro'yxatdan o'tish
               </Link>
@@ -292,15 +332,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       <footer className="bg-slate-950 border-t border-slate-900 py-16">
          <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-12 items-center">
             <div className="text-center md:text-left">
-               <div className="flex items-center justify-center md:justify-start space-x-3 mb-4 group">
-                  <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center group-hover:rotate-12 transition-transform">
-                    <ShieldCheck size={20} className="text-white" />
-                  </div>
+               <div className="flex items-center justify-center md:justify-start space-x-4 mb-4 group">
+                  <LogoComponent className="h-12" />
                   <span className="font-minecraft text-2xl tracking-widest text-emerald-400 uppercase">{config.siteName}</span>
                </div>
                <div className="flex flex-col space-y-1">
                  <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-slate-600">O'zbekistondagi eng barqaror server</p>
-                 <div className="md:hidden pt-2">
+                 <div className="md:hidden pt-4 flex justify-center">
                     <NetworkIndicator />
                  </div>
                </div>

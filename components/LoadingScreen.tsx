@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Terminal, Cpu, Database, Network } from 'lucide-react';
+import { LogoComponent } from './Layout';
 
 export const LoadingScreen: React.FC = () => {
   const [progress, setProgress] = useState(0);
@@ -41,9 +42,7 @@ export const LoadingScreen: React.FC = () => {
         {/* Animated Icon Container */}
         <div className="relative mb-16">
           <div className="absolute inset-0 bg-emerald-500 blur-3xl opacity-20 animate-pulse scale-150" />
-          <div className="w-28 h-28 bg-emerald-500 rounded-[2.5rem] flex items-center justify-center shadow-2xl emerald-glow animate-float relative z-10 border-4 border-emerald-400/50">
-            <ShieldCheck size={56} className="text-white drop-shadow-lg" />
-          </div>
+          <LogoComponent className="h-28 md:h-32 border-4 border-emerald-400/50 animate-float relative z-10" />
           
           {/* Orbiting Elements */}
           <div className="absolute inset-0 -m-4 animate-spin-slow pointer-events-none">
