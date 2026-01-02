@@ -285,7 +285,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const addProduct = async (p: any) => { await supabase.from('products').insert([p]); await fetchData(); };
   const updateProduct = async (id: string, p: any) => { await supabase.from('products').update(p).eq('id', id); await fetchData(); };
   const deleteProduct = async (id: string, p: string) => { if(p === 'qazzaq') { await supabase.from('products').delete().eq('id', id); await fetchData(); return true; } return false; };
-  const seedProducts = async () => { await supabase.from('products').insert(MOCK_PRODUCTS.map(({id, ...p}) => p)); await fetchData(); };
+  
+  const seedProducts = async () => { 
+    if (!isSupabaseConfigured) return;
+    // Bazadagi barcha mavjud mahsulotlarni o'chirish (Tozalash)
+    await supabase.from('products').delete().neq('name', '___FORCE_DELETE_ALL___');
+    // Yangi mahsulotlarni (30/60 kunlik tariflar bilan) yuklash
+    await supabase.from('products').insert(MOCK_PRODUCTS.map(({id, ...p}) => ({
+      ...p,
+      tariffs: JSON.stringify(p.tariffs) // Supabase JSON ustuniga moslash
+    }))); 
+    await fetchData(); 
+  };
+
   const updateConfig = (c: any) => setConfig(c);
 
   return (

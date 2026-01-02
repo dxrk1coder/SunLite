@@ -39,7 +39,7 @@ export const AdminLayout: React.FC = () => {
         <div className={`p-4 rounded-2xl border mb-6 flex items-center space-x-3 transition-colors ${dbConnected ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-500' : 'bg-rose-500/5 border-rose-500/20 text-rose-500'}`}>
            {dbConnected ? <DatabaseZap size={18} /> : <Database size={18} />}
            <div className="text-[10px] font-bold uppercase tracking-widest">
-              Database: {dbConnected ? 'CONNECTED' : 'MOCK MODE'}
+              Backend: {dbConnected ? 'SUPABASE ACTIVE' : 'LOCAL MODE'}
            </div>
         </div>
         

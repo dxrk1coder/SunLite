@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { Category, Product, Tariff } from '../../types';
-import { Plus, Trash2, Edit3, X, Crown, Coins, Package, Gavel, Eye, EyeOff, DatabaseZap, CheckCircle2 } from 'lucide-react';
+import { Plus, Trash2, Edit3, X, Crown, Coins, Package, Gavel, Eye, EyeOff, DatabaseZap, CheckCircle2, RefreshCw } from 'lucide-react';
 
 export const AdminProducts: React.FC = () => {
   const { products, addProduct, updateProduct, deleteProduct, seedProducts, dbConnected, addBroadcast } = useStore();
@@ -14,10 +14,16 @@ export const AdminProducts: React.FC = () => {
   const [isSeeding, setIsSeeding] = useState(false);
 
   const handleSeed = async () => {
-    if (!window.confirm("Barcha namunaviy mahsulotlarni Supabase bazasiga yuklamoqchimisiz?")) return;
+    if (!window.confirm("Barcha mahsulotlar o'chiriladi va koddagi yangi tariflar (30/60 kunlik) bilan almashtiriladi. Tasdiqlaysizmi?")) return;
     setIsSeeding(true);
-    await seedProducts();
-    setIsSeeding(false);
+    try {
+      await seedProducts();
+      addBroadcast('Baza muvaffaqiyatli yangilandi!', 'success');
+    } catch (err) {
+      addBroadcast('Xatolik yuz berdi', 'error');
+    } finally {
+      setIsSeeding(false);
+    }
   };
 
   const handleAddTariff = () => {
@@ -28,7 +34,6 @@ export const AdminProducts: React.FC = () => {
       return;
     }
     
-    // Default values reflect the new 30-day requirement
     const newTariff: Tariff = {
       id: Math.random().toString(36).substr(2, 5),
       name: tariffs.length === 0 ? '30 kunlik' : '60 kunlik',
@@ -90,16 +95,19 @@ export const AdminProducts: React.FC = () => {
     <>
       <div className="space-y-8 animate-fade-in">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <h2 className="text-2xl font-minecraft text-emerald-400 uppercase tracking-widest">MAHSULOTLAR</h2>
+          <div>
+            <h2 className="text-2xl font-minecraft text-emerald-400 uppercase tracking-widest">MAHSULOTLAR</h2>
+            <p className="text-[9px] text-slate-500 uppercase font-bold tracking-widest mt-1">Hozirda: {products.length} ta mahsulot bazada</p>
+          </div>
           <div className="flex items-center space-x-3">
             {dbConnected && (
                <button 
                 onClick={handleSeed}
                 disabled={isSeeding}
-                className="bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white px-6 py-2 rounded-xl font-bold flex items-center space-x-2 transition-all border border-blue-500/20"
+                className="bg-blue-600/10 hover:bg-blue-600 text-blue-400 hover:text-white px-6 py-2.5 rounded-xl font-bold flex items-center space-x-2 transition-all border border-blue-500/20 group"
               >
-                {isSeeding ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <DatabaseZap size={18} />}
-                <span>Bazani yangilash (Mock)</span>
+                {isSeeding ? <RefreshCw size={18} className="animate-spin" /> : <DatabaseZap size={18} className="group-hover:animate-pulse" />}
+                <span>Bazani Tozalash va Sinxronlash</span>
               </button>
             )}
             <button 
@@ -107,7 +115,7 @@ export const AdminProducts: React.FC = () => {
                 setCurrentProduct({ name: '', description: '', category: Category.RANKS, active: true, tariffs: [], image: '' });
                 setIsEditing(true);
               }}
-              className="bg-emerald-600 hover:bg-emerald-500 px-6 py-2 rounded-xl font-bold flex items-center space-x-2 transition-all emerald-glow"
+              className="bg-emerald-600 hover:bg-emerald-500 px-6 py-2.5 rounded-xl font-bold flex items-center space-x-2 transition-all emerald-glow"
             >
               <Plus size={18} />
               <span>Yangi mahsulot</span>

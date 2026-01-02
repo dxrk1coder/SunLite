@@ -27,6 +27,14 @@ export const Store: React.FC = () => {
     p.active && (selectedCategory === 'ALL' || p.category === selectedCategory)
   );
 
+  // Helper function to force "30 kunlik" and "60 kunlik" format even if DB has old values
+  const formatTariffName = (name: string) => {
+    const n = name.toUpperCase().trim();
+    if (n.includes('1 OY') || n.includes('1-OY') || n.includes('30 KUN')) return '30 kunlik';
+    if (n.includes('3 OY') || n.includes('3-OY') || n.includes('60 KUN') || n.includes('2 OY')) return '60 kunlik';
+    return name;
+  };
+
   const getCategoryTheme = (category: Category) => {
     switch (category) {
       case Category.RANKS:
@@ -191,7 +199,6 @@ export const Store: React.FC = () => {
                <p className="text-slate-400 text-xs leading-relaxed mb-6 md:mb-10 opacity-80">{selectedProduct.description}</p>
                
                <div className="mt-auto space-y-4">
-                  {/* Nickname Warning */}
                   <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl flex items-start space-x-3 animate-pulse">
                      <ShieldAlert className="text-rose-500 shrink-0 mt-0.5" size={16} />
                      <p className="text-[10px] text-rose-200 font-bold uppercase leading-relaxed tracking-wider">
@@ -273,7 +280,9 @@ export const Store: React.FC = () => {
                         >
                           <div className="flex items-center space-x-2 mb-1 z-10">
                              <Clock size={12} className={selectedTariff?.id === t.id ? 'text-emerald-400' : 'text-slate-600'} />
-                             <span className={`text-[9px] font-bold uppercase tracking-widest ${selectedTariff?.id === t.id ? 'text-white' : 'text-slate-500'}`}>{t.name}</span>
+                             <span className={`text-[9px] font-bold uppercase tracking-widest ${selectedTariff?.id === t.id ? 'text-white' : 'text-slate-500'}`}>
+                               {formatTariffName(t.name)}
+                             </span>
                           </div>
                           <p className={`text-xl font-bold font-minecraft z-10 ${selectedTariff?.id === t.id ? 'text-emerald-400' : 'text-slate-400'}`}>{t.price.toLocaleString()} <span className="text-[10px]">UZS</span></p>
                           {selectedTariff?.id === t.id && <div className="absolute top-0 right-0 p-1 bg-emerald-500 text-white rounded-bl-lg"><CheckCircle2 size={10} /></div>}
