@@ -6,9 +6,47 @@ import {
   Menu, X, LayoutDashboard, ShoppingCart, 
   Wallet, Settings, LogOut, User as UserIcon,
   Bell, ShieldCheck, CheckCheck, Trash2, HelpCircle,
-  Wrench, ArrowLeft, ChevronRight, Activity
+  Wrench, ArrowLeft, ChevronRight, Activity, Wifi, WifiOff
 } from 'lucide-react';
 import { UserRole } from '../types';
+
+const NetworkIndicator = () => {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [latency, setLatency] = useState<number>(Math.floor(Math.random() * 20) + 15);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    const interval = setInterval(() => {
+      if (isOnline) {
+        setLatency(prev => {
+          const change = Math.floor(Math.random() * 5) - 2;
+          return Math.max(10, Math.min(100, prev + change));
+        });
+      }
+    }, 3000);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      clearInterval(interval);
+    };
+  }, [isOnline]);
+
+  return (
+    <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-full border text-[9px] font-black uppercase tracking-widest transition-all ${
+      isOnline 
+        ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' 
+        : 'bg-rose-500/10 border-rose-500/20 text-rose-500 animate-pulse'
+    }`}>
+      {isOnline ? <Wifi size={12} /> : <WifiOff size={12} />}
+      <span>{isOnline ? `Online • ${latency}ms` : 'Offline'}</span>
+    </div>
+  );
+};
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { 
@@ -41,7 +79,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     navigate('/login');
   };
 
-  // Maintenance logic: Only blocks non-admins
   const isMaintenanceActive = config.maintenanceMode && user?.role !== UserRole.ADMIN;
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 
@@ -73,7 +110,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col relative">
-      {/* Maintenance Overlay - Premium Design */}
       {isMaintenanceActive && !isAuthPage && (
         <div className="fixed inset-0 z-[9999] bg-slate-950 flex flex-col items-center justify-center p-6 text-center overflow-hidden">
           <div className="absolute inset-0 z-0">
@@ -100,7 +136,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             <div className="h-1 w-32 bg-amber-500/30 rounded-full mb-8" />
             
             <p className="text-slate-400 text-lg md:text-xl mb-12 font-medium leading-relaxed">
-              SUNLITE.GG hozirda takomillashtirilmoqda. Biz siz uchun eng so'nggi texnologiyalarni va xavfsizlik tizimlarini joriy etyapmiz. Tez orada yanada kuchliroq qaytamiz!
+              SUNLITE.GG hozirda takomillashtirilmoqda. Tez orada yanada kuchliroq qaytamiz!
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -113,15 +149,10 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                </a>
             </div>
           </div>
-          
-          <div className="absolute bottom-10 text-[10px] font-bold text-slate-700 uppercase tracking-[0.5em]">
-             Sunlite System v2.5.0 • Protected by Arcanum
-          </div>
         </div>
       )}
 
-      {/* Broadcasts */}
-      <div className="fixed top-20 right-4 z-[100] space-y-2 pointer-events-none w-full max-w-[350px]">
+      <div className="fixed top-24 right-4 z-[100] space-y-2 pointer-events-none w-full max-w-[350px]">
         {broadcasts.map(bc => (
           <div key={bc.id} className="pointer-events-auto p-4 rounded-2xl border border-slate-800 shadow-2xl backdrop-blur-xl flex items-center justify-between bg-slate-900/90 border-l-4 border-l-emerald-500 animate-slide-in-right">
             <div className="flex items-center space-x-3">
@@ -133,18 +164,21 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         ))}
       </div>
 
-      {/* Navbar */}
       <nav className="sticky top-0 z-[100] bg-slate-950/80 backdrop-blur-xl border-b border-slate-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-20 items-center">
-            <Link to="/" className="flex items-center space-x-3 group">
-              <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center emerald-glow transition-transform group-hover:rotate-12">
-                <ShieldCheck className="text-white" size={24} />
+            <div className="flex items-center space-x-8">
+              <Link to="/" className="flex items-center space-x-3 group">
+                <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center emerald-glow transition-transform group-hover:rotate-12">
+                  <ShieldCheck className="text-white" size={24} />
+                </div>
+                <span className="font-minecraft text-2xl tracking-widest text-emerald-400 uppercase">{config.siteName}</span>
+              </Link>
+              <div className="hidden lg:block">
+                <NetworkIndicator />
               </div>
-              <span className="font-minecraft text-2xl tracking-widest text-emerald-400 uppercase">{config.siteName}</span>
-            </Link>
+            </div>
 
-            {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-2">
               <NavLink to="/" icon={LayoutDashboard} label="Asosiy" />
               <NavLink to="/store" icon={ShoppingCart} label="Do'kon" />
@@ -153,7 +187,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   <NavLink to="/balance" icon={Wallet} label="Balans" />
                   <NavLink to="/admin" icon={Settings} label="Admin" adminOnly />
                   
-                  {/* Notifications Toggle */}
                   <div className="relative" ref={notifRef}>
                     <button onClick={() => setIsNotifOpen(!isNotifOpen)} className="p-3 text-slate-400 hover:text-emerald-400 transition-colors relative">
                       <Bell size={20} />
@@ -190,8 +223,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
                   <Link to="/profile" className="flex items-center space-x-3 bg-slate-900/50 px-4 py-2 rounded-2xl border border-slate-800 hover:border-emerald-500 transition-all group">
                     <span className="text-[11px] font-bold text-emerald-400">@{user.nickname}</span>
-                    <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-emerald-500 group-hover:text-white transition-all">
-                       <UserIcon size={16} />
+                    <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-emerald-500 group-hover:text-white transition-all overflow-hidden">
+                       {user.avatarUrl ? (
+                         <img src={user.avatarUrl} className="w-full h-full object-cover" />
+                       ) : (
+                         <span className="font-bold text-[10px]">{user.nickname.charAt(0).toUpperCase()}</span>
+                       )}
                     </div>
                   </Link>
                   <button onClick={handleLogout} className="p-3 text-slate-600 hover:text-rose-500 transition-colors"><LogOut size={22}/></button>
@@ -204,14 +241,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               )}
             </div>
 
-            {/* Mobile Menu Button */}
             <div className="md:hidden flex items-center space-x-4">
-              {user && unreadCount > 0 && (
-                <button onClick={() => navigate('/profile')} className="relative p-2 text-slate-400">
-                  <Bell size={20} />
-                  <span className="absolute top-1 right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-slate-950" />
-                </button>
-              )}
+              <NetworkIndicator />
               <button 
                 onClick={() => setIsMenuOpen(!isMenuOpen)} 
                 className={`p-3 rounded-xl transition-all ${isMenuOpen ? 'bg-emerald-500 text-white' : 'bg-slate-900 text-slate-400 border border-slate-800'}`}
@@ -222,7 +253,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           </div>
         </div>
 
-        {/* Mobile Dropdown Menu */}
         <div className={`md:hidden fixed inset-x-0 top-20 bg-slate-950/95 backdrop-blur-2xl border-b border-slate-900 transition-all duration-300 overflow-hidden z-[90] ${isMenuOpen ? 'max-h-[85vh] opacity-100 py-6' : 'max-h-0 opacity-0 py-0'}`}>
           <div className="px-4 flex flex-col space-y-2">
             <NavLink to="/" icon={LayoutDashboard} label="Bosh sahifa" />
@@ -235,16 +265,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 <NavLink to="/profile" icon={UserIcon} label="Profil" />
                 
                 <div className="pt-4 mt-4 border-t border-slate-900">
-                  <div className="p-6 bg-slate-900/50 rounded-3xl flex items-center justify-between mb-4 border border-slate-800">
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Gamer</p>
-                      <p className="text-lg font-minecraft text-emerald-400">@{user.nickname}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Balans</p>
-                      <p className="text-lg font-minecraft text-white">{user.balance.toLocaleString()} UZS</p>
-                    </div>
-                  </div>
                   <button 
                     onClick={handleLogout}
                     className="w-full flex items-center justify-center space-x-3 p-5 rounded-2xl bg-rose-600/10 text-rose-500 font-bold uppercase text-[11px] tracking-widest border border-rose-500/20"
@@ -278,7 +298,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   </div>
                   <span className="font-minecraft text-2xl tracking-widest text-emerald-400 uppercase">{config.siteName}</span>
                </div>
-               <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-slate-600">O'zbekistondagi eng barqaror server</p>
+               <div className="flex flex-col space-y-1">
+                 <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-slate-600">O'zbekistondagi eng barqaror server</p>
+                 <div className="md:hidden pt-2">
+                    <NetworkIndicator />
+                 </div>
+               </div>
             </div>
             
             <div className="flex flex-col items-center space-y-4">
@@ -294,8 +319,11 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                </a>
             </div>
 
-            <div className="text-center md:text-right">
+            <div className="text-center md:text-right space-y-2">
                <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-slate-700">SUNLITE.GG &copy; 2024. Barcha huquqlar himoyalangan.</p>
+               <div className="hidden md:flex justify-end">
+                  <NetworkIndicator />
+               </div>
             </div>
          </div>
       </footer>

@@ -1,9 +1,21 @@
+
 <!DOCTYPE html>
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SUNLITE.GG | Official Store</title>
+    
+    <!-- Favicon sozlamalari -->
+    <!-- 1. Standart rasm (agar favicon.png faylingiz bo'lsa) -->
+    <link rel="icon" type="image/png" href="/favicon.png">
+    
+    <!-- 2. Apple qurilmalari uchun rasm -->
+    <link rel="apple-touch-icon" href="/favicon.png">
+    
+    <!-- 3. Vaqtinchalik emoji favicon (Emerald stili uchun) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💎</text></svg>">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,6 +39,9 @@
 
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
         .animate-shake { animation: shake 0.2s ease-in-out 2; }
+
+        @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .animate-spin-slow { animation: spin-slow 10s infinite linear; }
 
         /* Custom scrollbar */
         ::-webkit-scrollbar { width: 6px; }

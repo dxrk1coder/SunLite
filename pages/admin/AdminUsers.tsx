@@ -1,8 +1,30 @@
 
 import React, { useState } from 'react';
 import { useStore } from '../../context/StoreContext';
-import { User as UserIcon, Trash2, Wallet, ShieldCheck, Mail, Eye, EyeOff, Plus, X, UserPlus, Shield, Edit3, Lock, Save } from 'lucide-react';
+import { User as UserIcon, Trash2, Wallet, ShieldCheck, Mail, Eye, EyeOff, Plus, X, UserPlus, Shield, Edit3, Lock, Save, AlertTriangle } from 'lucide-react';
 import { UserRole, User } from '../../types';
+
+const UserAvatar = ({ user, size = 10 }: { user: User, size?: number }) => {
+  const initials = user.nickname.charAt(0).toUpperCase();
+  const colors = [
+    'bg-emerald-500', 'bg-blue-500', 'bg-indigo-500', 'bg-purple-500', 
+    'bg-rose-500', 'bg-amber-500', 'bg-cyan-500', 'bg-teal-500'
+  ];
+  
+  // Deterministic color based on nickname
+  const colorIndex = user.nickname.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
+  const bgColor = colors[colorIndex];
+
+  return (
+    <div className={`w-${size} h-${size} rounded-2xl ${bgColor} flex items-center justify-center border border-white/10 shadow-lg overflow-hidden shrink-0`}>
+      {user.avatarUrl ? (
+        <img src={user.avatarUrl} className="w-full h-full object-cover" alt={user.nickname} />
+      ) : (
+        <span className="font-minecraft text-white font-bold text-lg drop-shadow-md">{initials}</span>
+      )}
+    </div>
+  );
+};
 
 export const AdminUsers: React.FC = () => {
   const { users, deleteUser, adminAddUser, adminUpdateUser, addBroadcast } = useStore();
@@ -38,7 +60,6 @@ export const AdminUsers: React.FC = () => {
     e.preventDefault();
     if (!editingUser) return;
     
-    // Faqat o'zgarishi kerak bo'lgan maydonlarni yuboramiz
     const updates = {
       nickname: editingUser.nickname,
       role: editingUser.role,
@@ -69,15 +90,15 @@ export const AdminUsers: React.FC = () => {
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-minecraft text-emerald-400 uppercase tracking-widest">Foydalanuvchilar</h2>
           <div className="flex items-center space-x-4">
-            <span className="text-[10px] bg-slate-950 px-4 py-1.5 rounded-full border border-slate-800 font-bold text-slate-500 uppercase">
+            <span className="text-[10px] bg-slate-950 px-4 py-1.5 rounded-full border border-slate-800 font-bold text-slate-500 uppercase tracking-widest">
               {users.length} jami
             </span>
             <button 
               onClick={() => setIsAdding(true)}
-              className="bg-emerald-600 hover:bg-emerald-500 px-6 py-2 rounded-xl font-bold flex items-center space-x-2 transition-all emerald-glow"
+              className="bg-emerald-600 hover:bg-emerald-500 px-6 py-2.5 rounded-xl font-bold flex items-center space-x-2 transition-all emerald-glow active:scale-95"
             >
               <UserPlus size={18} />
-              <span>Yangi User</span>
+              <span className="text-[10px] uppercase tracking-widest">Yangi User</span>
             </button>
           </div>
         </div>
@@ -99,9 +120,7 @@ export const AdminUsers: React.FC = () => {
                   <tr key={u.id} className="border-b border-slate-900/50 hover:bg-slate-900/30 transition-colors group">
                     <td className="p-6 px-8">
                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 rounded-2xl bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-700">
-                             {u.avatarUrl ? <img src={u.avatarUrl} className="w-full h-full object-cover" /> : <UserIcon size={18} className="text-slate-500" />}
-                          </div>
+                          <UserAvatar user={u} />
                           <span className="font-bold text-slate-200 tracking-wider">@{u.nickname}</span>
                        </div>
                     </td>
@@ -128,14 +147,14 @@ export const AdminUsers: React.FC = () => {
                       <div className="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-all">
                         <button 
                           onClick={() => setEditingUser({ ...u })}
-                          className="p-2 text-emerald-400 hover:bg-emerald-400/10 rounded-lg transition-all"
+                          className="p-2 text-emerald-400 hover:bg-emerald-400/10 rounded-lg transition-all active:scale-90"
                         >
                           <Edit3 size={18} />
                         </button>
                         {u.role !== UserRole.ADMIN && (
                           <button 
                             onClick={() => setShowPassModal(u.id)}
-                            className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all"
+                            className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all active:scale-90"
                           >
                             <Trash2 size={18} />
                           </button>
@@ -222,8 +241,8 @@ export const AdminUsers: React.FC = () => {
                 </div>
 
                 <div className="flex gap-4 pt-6">
-                   <button type="button" onClick={() => setIsAdding(false)} className="flex-1 py-4 bg-slate-800 rounded-2xl font-bold uppercase tracking-widest text-xs">Bekor</button>
-                   <button type="submit" className="flex-1 py-4 bg-emerald-600 rounded-2xl font-bold emerald-glow uppercase tracking-widest text-xs text-white">Yaratish</button>
+                   <button type="button" onClick={() => setIsAdding(false)} className="flex-1 py-4 bg-slate-800 rounded-2xl font-bold uppercase tracking-widest text-xs active:scale-95 transition-transform">Bekor</button>
+                   <button type="submit" className="flex-1 py-4 bg-emerald-600 rounded-2xl font-bold emerald-glow uppercase tracking-widest text-xs text-white active:scale-95 transition-transform">Yaratish</button>
                 </div>
              </form>
           </div>
@@ -270,8 +289,8 @@ export const AdminUsers: React.FC = () => {
                 </div>
 
                 <div className="flex gap-4 pt-6">
-                   <button type="button" onClick={() => setEditingUser(null)} className="flex-1 py-4 bg-slate-800 rounded-2xl font-bold uppercase tracking-widest text-xs">Bekor</button>
-                   <button type="submit" className="flex-1 py-4 bg-emerald-600 rounded-2xl font-bold emerald-glow uppercase tracking-widest text-xs text-white">Saqlash</button>
+                   <button type="button" onClick={() => setEditingUser(null)} className="flex-1 py-4 bg-slate-800 rounded-2xl font-bold uppercase tracking-widest text-xs active:scale-95 transition-transform">Bekor</button>
+                   <button type="submit" className="flex-1 py-4 bg-emerald-600 rounded-2xl font-bold emerald-glow uppercase tracking-widest text-xs text-white active:scale-95 transition-transform">Saqlash</button>
                 </div>
              </form>
           </div>
@@ -281,19 +300,37 @@ export const AdminUsers: React.FC = () => {
       {showPassModal && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-xl animate-fade-in" onClick={() => setShowPassModal(null)} />
-          <div className="relative bg-slate-900 border border-slate-800 p-10 rounded-[2.5rem] max-w-sm w-full text-center shadow-2xl animate-scale-in z-50">
+          <div className="relative bg-slate-900 border border-rose-500/30 p-10 rounded-[2.5rem] max-w-sm w-full text-center shadow-2xl animate-scale-in z-50">
             <Trash2 className="mx-auto text-rose-500 mb-6 bg-rose-500/10 p-4 rounded-full" size={56} />
-            <h3 className="text-xl font-minecraft font-bold mb-2 uppercase tracking-widest">O'CHIRISH</h3>
-            <p className="text-slate-500 text-[10px] font-bold uppercase mb-8">Admin parolini kiriting.</p>
-            <input 
-              type="password" value={adminPass} onChange={e => setAdminPass(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 p-5 rounded-2xl focus:border-rose-500 outline-none text-center font-bold mb-6"
-              placeholder="••••••••"
-              autoFocus
-            />
+            <h3 className="text-xl font-minecraft font-bold mb-2 uppercase tracking-widest text-rose-500">O'CHIRISH</h3>
+            
+            <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl mb-8 flex items-start space-x-3 text-left">
+              <AlertTriangle className="text-rose-500 shrink-0 mt-0.5" size={16} />
+              <p className="text-[10px] text-rose-200 font-bold uppercase leading-relaxed tracking-wider">
+                DIQQAT: Foydalanuvchini o'chirish barcha unga tegishli ma'lumotlarni (balans, buyurtmalar) o'chirib yuboradi. Ushbu amalni qaytarib bo'lmaydi!
+              </p>
+            </div>
+
+            <p className="text-slate-500 text-[10px] font-bold uppercase mb-4 tracking-widest">Admin parolini kiriting</p>
+            <div className="relative">
+              <input 
+                type={showAdminPass ? "text" : "password"}
+                value={adminPass} onChange={e => setAdminPass(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 p-5 rounded-2xl focus:border-rose-500 outline-none text-center font-bold mb-6 tracking-widest"
+                placeholder="••••••••"
+                autoFocus
+              />
+              <button 
+                type="button" 
+                onClick={() => setShowAdminPass(!showAdminPass)}
+                className="absolute right-4 top-1/2 -translate-y-[calc(50%+12px)] text-slate-500"
+              >
+                {showAdminPass ? <EyeOff size={18}/> : <Eye size={18}/>}
+              </button>
+            </div>
             <div className="flex space-x-3">
-              <button onClick={() => setShowPassModal(null)} className="flex-1 py-4 bg-slate-800 rounded-2xl font-bold uppercase text-[10px] tracking-widest">Bekor</button>
-              <button onClick={confirmDelete} className="flex-1 py-4 bg-rose-600 rounded-2xl font-bold uppercase text-[10px] tracking-widest text-white">O'chirish</button>
+              <button onClick={() => setShowPassModal(null)} className="flex-1 py-4 bg-slate-800 rounded-2xl font-bold uppercase text-[10px] tracking-widest active:scale-95 transition-transform">Bekor</button>
+              <button onClick={confirmDelete} className="flex-1 py-4 bg-rose-600 rounded-2xl font-bold uppercase text-[10px] tracking-widest text-white active:scale-95 transition-transform">O'chirish</button>
             </div>
           </div>
         </div>
