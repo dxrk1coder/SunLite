@@ -2,11 +2,18 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../context/StoreContext';
 import { Category, Product, Tariff } from '../types';
-import { ShoppingCart, Clock, Crown, Coins, Package, Gavel, AlertTriangle, X, ChevronRight, User, Send, CheckCircle2, ShieldAlert, HelpCircle } from 'lucide-react';
+import { 
+  ShoppingCart, Clock, Crown, Coins, Package, Gavel, 
+  AlertTriangle, X, ChevronRight, User, Send, CheckCircle2, 
+  ShieldAlert, HelpCircle, ArrowUpDown, SortAsc, SortDesc 
+} from 'lucide-react';
+
+type SortOrder = 'DEFAULT' | 'PRICE_ASC' | 'PRICE_DESC';
 
 export const Store: React.FC = () => {
   const { products, user, purchaseProduct, addBroadcast } = useStore();
   const [selectedCategory, setSelectedCategory] = useState<Category | 'ALL'>('ALL');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('DEFAULT');
   const [buyingId, setBuyingId] = useState<string | null>(null);
   const [nickname, setNickname] = useState('');
   const [contactInfo, setContactInfo] = useState('');
@@ -23,9 +30,32 @@ export const Store: React.FC = () => {
     return () => { document.body.style.overflow = 'unset'; };
   }, [showModal]);
 
-  const filteredProducts = products.filter(p => 
-    p.active && (selectedCategory === 'ALL' || p.category === selectedCategory)
-  );
+  // Helper function to get min price for a product
+  const getMinPrice = (p: Product) => {
+    if (!p.tariffs || p.tariffs.length === 0) return 0;
+    return Math.min(...p.tariffs.map(t => t.price));
+  };
+
+  // Filter and Sort Logic
+  const filteredAndSortedProducts = products
+    .filter(p => p.active && (selectedCategory === 'ALL' || p.category === selectedCategory))
+    .sort((a, b) => {
+      const priceA = getMinPrice(a);
+      const priceB = getMinPrice(b);
+
+      if (sortOrder === 'DEFAULT') {
+        // "Custom Rank" (p-custom) always first
+        if (a.id === 'p-custom') return -1;
+        if (b.id === 'p-custom') return 1;
+        // Then sort by price ASC
+        return priceA - priceB;
+      } else if (sortOrder === 'PRICE_ASC') {
+        return priceA - priceB;
+      } else if (sortOrder === 'PRICE_DESC') {
+        return priceB - priceA;
+      }
+      return 0;
+    });
 
   // Helper function to force "30 kunlik" and "60 kunlik" format even if DB has old values
   const formatTariffName = (name: string) => {
@@ -113,36 +143,74 @@ export const Store: React.FC = () => {
   return (
     <>
       <div className="max-w-7xl mx-auto px-4 py-12 md:py-16 animate-fade-in relative">
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-12 gap-8">
           <div>
             <h1 className="text-4xl md:text-5xl font-minecraft text-emerald-400 mb-2 tracking-wide uppercase">DO'KON</h1>
             <p className="text-slate-500 font-bold uppercase text-[9px] md:text-[10px] tracking-[0.2em]">O'yin olamingizni yangilang</p>
           </div>
           
-          <div className="flex flex-wrap gap-2">
-            {['ALL', ...Object.values(Category)].map(cat => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat as any)}
-                className={`px-5 md:px-8 py-2.5 md:py-3 rounded-xl md:rounded-2xl font-bold transition-all uppercase text-[10px] md:text-xs tracking-widest border ${
-                  selectedCategory === cat 
-                  ? 'bg-emerald-600 text-white border-emerald-500 emerald-glow' 
-                  : 'bg-slate-900 text-slate-400 border-slate-800 hover:border-emerald-500/50'
-                }`}
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Category Filter */}
+            <div className="flex flex-wrap gap-2">
+              {['ALL', ...Object.values(Category)].map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat as any)}
+                  className={`px-5 md:px-6 py-2.5 rounded-xl font-bold transition-all uppercase text-[10px] md:text-xs tracking-widest border ${
+                    selectedCategory === cat 
+                    ? 'bg-emerald-600 text-white border-emerald-500 emerald-glow' 
+                    : 'bg-slate-900 text-slate-400 border-slate-800 hover:border-emerald-500/50'
+                  }`}
+                >
+                  {cat === 'ALL' ? 'Barchasi' : cat}
+                </button>
+              ))}
+            </div>
+
+            {/* Sort Toggle */}
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-1 flex">
+              <button 
+                onClick={() => setSortOrder('DEFAULT')}
+                className={`p-2 rounded-lg transition-all flex items-center space-x-2 px-3 ${sortOrder === 'DEFAULT' ? 'bg-emerald-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                title="Birlamchi saralash"
               >
-                {cat === 'ALL' ? 'Barchasi' : cat}
+                <ArrowUpDown size={14} />
+                <span className="text-[10px] font-bold uppercase tracking-widest hidden md:inline">Standart</span>
               </button>
-            ))}
+              <button 
+                onClick={() => setSortOrder('PRICE_ASC')}
+                className={`p-2 rounded-lg transition-all flex items-center space-x-2 px-3 ${sortOrder === 'PRICE_ASC' ? 'bg-emerald-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                title="Arzonidan qimmatiga"
+              >
+                <SortAsc size={14} />
+                <span className="text-[10px] font-bold uppercase tracking-widest hidden md:inline">Arzon</span>
+              </button>
+              <button 
+                onClick={() => setSortOrder('PRICE_DESC')}
+                className={`p-2 rounded-lg transition-all flex items-center space-x-2 px-3 ${sortOrder === 'PRICE_DESC' ? 'bg-emerald-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                title="Qimmatidan arzoniga"
+              >
+                <SortDesc size={14} />
+                <span className="text-[10px] font-bold uppercase tracking-widest hidden md:inline">Qimmat</span>
+              </button>
+            </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProducts.map(product => {
+          {filteredAndSortedProducts.map(product => {
             const theme = getCategoryTheme(product.category);
-            const minPrice = Math.min(...product.tariffs.map(t => t.price));
+            const minPrice = getMinPrice(product);
+            const isCustom = product.id === 'p-custom';
+
             return (
-              <div key={product.id} className="group bg-slate-900/50 border border-slate-800 rounded-[2rem] overflow-hidden hover:border-emerald-500/40 transition-all flex flex-col h-full shadow-lg">
+              <div key={product.id} className={`group bg-slate-900/50 border rounded-[2rem] overflow-hidden transition-all flex flex-col h-full shadow-lg ${isCustom ? 'border-emerald-500/40 ring-2 ring-emerald-500/10' : 'border-slate-800 hover:border-emerald-500/40'}`}>
                 <div className="relative h-44 bg-slate-950 flex items-center justify-center overflow-hidden">
+                  {isCustom && (
+                    <div className="absolute top-4 left-4 z-20 bg-emerald-600 text-[8px] font-black px-3 py-1 rounded-full text-white uppercase tracking-[0.2em] shadow-lg animate-pulse">
+                      Saralangan
+                    </div>
+                  )}
                   <div className={`absolute inset-0 ${theme.bg} opacity-20 blur-2xl group-hover:scale-150 transition-transform duration-700`}></div>
                   <div className={`transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 z-10 ${theme.color}`}>
                     {theme.icon}
@@ -150,7 +218,7 @@ export const Store: React.FC = () => {
                 </div>
                 <div className="p-6 flex-grow flex flex-col">
                   <div className="flex items-start justify-between mb-2">
-                    <h3 className="text-xl font-bold font-minecraft tracking-wide group-hover:text-emerald-400 transition-colors uppercase">{product.name}</h3>
+                    <h3 className={`text-xl font-bold font-minecraft tracking-wide transition-colors uppercase ${isCustom ? 'text-emerald-400' : 'group-hover:text-emerald-400'}`}>{product.name}</h3>
                     <span className="text-[8px] font-bold px-2 py-0.5 rounded-full border border-slate-800 uppercase tracking-widest text-slate-500 shrink-0 ml-2">{product.category}</span>
                   </div>
                   <p className="text-slate-500 text-[11px] mb-6 line-clamp-2 leading-relaxed h-8">{product.description}</p>

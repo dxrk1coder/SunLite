@@ -30,8 +30,8 @@ export const MOCK_PRODUCTS: Product[] = [
     image: 'https://picsum.photos/seed/custom/400/300',
     active: true,
     tariffs: [
-      { id: 't-c-1', name: '30 kunlik', price: 130000, duration: '30 kun' },
-      { id: 't-c-2', name: '60 kunlik', price: 230000, duration: '60 kun' }
+      { id: 't-c-1', name: '30 kunlik', price: 600000, duration: '30 kun' },
+      { id: 't-c-2', name: '60 kunlik', price: 1000000, duration: '60 kun' }
     ]
   },
   {
